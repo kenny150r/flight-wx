@@ -1,4 +1,4 @@
-import { formatFlightState } from "../analysis/flightState.js";
+import { formatFlightState, formatRadarWx } from "../analysis/flightState.js";
 import { MS_TO_KT } from "../analysis/shear.js";
 import { renderSeries, updateSeriesCursor } from "./series.js";
 
@@ -53,7 +53,9 @@ export function hideProgress(els) {
 }
 
 export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
-  root.hidden = false;
+  if (root) root.hidden = false;
+  const bottom = document.getElementById("bottom");
+  if (bottom) bottom.hidden = false;
   const maxDbz = summary.maxDbz?.value;
   const nearbyDbz = summary.maxNearbyDbz?.value;
   const maxComp = summary.maxCompositeDbz?.value;
@@ -63,28 +65,18 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   const horiz = summary.maxHorizShear || summary.maxAzShear;
   const vert = summary.maxVertShear;
 
-  root.querySelector("[data-card=dbz] .metric-value").textContent = fmt(maxDbz, 1);
-  root.querySelector("[data-card=dbz] .metric-sub").textContent = `Closest beam · nearby ${fmt(nearbyDbz, 1)} dBZ`;
-  root.querySelector("[data-card=dbz] .metric-meta").textContent = peakMeta(summary.maxDbz);
-
-  root.querySelector("[data-card=composite] .metric-value").textContent = fmt(maxComp, 1);
-  root.querySelector("[data-card=composite] .metric-sub").textContent = `Column max · nearby ${fmt(nearbyComp, 1)} dBZ`;
-  root.querySelector("[data-card=composite] .metric-meta").textContent =
-    peakMeta(summary.maxCompositeDbz, { tiltLabel: "composite tilt" });
-
-  root.querySelector("[data-card=vel] .metric-value").textContent = fmt(vrKt, 0);
-  root.querySelector("[data-card=vel] .metric-sub").textContent = `Nearby max ${fmt(nearbyVr, 0)} kt radial`;
-  root.querySelector("[data-card=vel] .metric-meta").textContent = peakMeta(summary.maxVr);
-
-  root.querySelector("[data-card=hshear] .metric-value").textContent = fmt(horiz?.ktPerKm, 1);
-  root.querySelector("[data-card=hshear] .metric-sub").textContent =
-    `Azimuthal · ${fmt(horiz?.perSec, 4)} s⁻¹`;
-  root.querySelector("[data-card=hshear] .metric-meta").textContent = peakMeta(horiz);
-
-  root.querySelector("[data-card=vshear] .metric-value").textContent = fmt(vert?.ktPerKm, 1);
-  root.querySelector("[data-card=vshear] .metric-sub").textContent =
-    `${fmt(vert?.perSec, 4)} s⁻¹ · ${fmt(vert?.ktPer1000Ft, 1)} kt / 1000 ft`;
-  root.querySelector("[data-card=vshear] .metric-meta").textContent = peakMeta(vert);
+  const setCard = (key, value, digits, title) => {
+    const card = root.querySelector(`[data-card=${key}]`);
+    if (!card) return;
+    const metric = card.querySelector(".metric-value");
+    if (metric) metric.textContent = fmt(value, digits);
+    card.title = title || "";
+  };
+  setCard("dbz", maxDbz, 1, `Closest beam · nearby ${fmt(nearbyDbz, 1)} dBZ\n${peakMeta(summary.maxDbz)}`);
+  setCard("composite", maxComp, 1, `Column max · nearby ${fmt(nearbyComp, 1)} dBZ\n${peakMeta(summary.maxCompositeDbz, { tiltLabel: "composite tilt" })}`);
+  setCard("vel", vrKt, 0, `Nearby max ${fmt(nearbyVr, 0)} kt radial\n${peakMeta(summary.maxVr)}`);
+  setCard("hshear", horiz?.ktPerKm, 1, `Azimuthal · ${fmt(horiz?.perSec, 4)} s⁻¹\n${peakMeta(horiz)}`);
+  setCard("vshear", vert?.ktPerKm, 1, `${fmt(vert?.perSec, 4)} s⁻¹ · ${fmt(vert?.ktPer1000Ft, 1)} kt / 1000 ft\n${peakMeta(vert)}`);
 
   const notes = [];
   if (meta?.route?.origin) notes.push(`Typical route ${meta.route.origin}→${meta.route.destination || "?"}`);
@@ -97,7 +89,8 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (meta?.notes?.length) notes.push(...meta.notes);
   notes.push("Max reflectivity is the closest-beam gate at flight level. Composite is the strongest gate in the column (any tilt) at that lat/lon. Click a peak card to zoom to that event.");
   notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only.");
-  root.querySelector("[data-notes]").textContent = notes.join("\n");
+  const notesEl = root.querySelector("[data-notes]");
+  if (notesEl) notesEl.textContent = notes.join("\n");
 
   const cardMap = {
     dbz: { sample: summary.maxDbz?.sample, product: "reflectivity" },
@@ -113,9 +106,10 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
     card.onclick = sample ? () => onSelect?.(sample, { product, zoom: true }) : null;
   }
 
-  renderSeries(root, summary.samples, selected, onSelect);
+  renderSeries(document.getElementById("charts") || root, summary.samples, selected, onSelect);
 
-  const tbody = root.querySelector("[data-table]");
+  const tbody = document.querySelector("[data-table]");
+  if (!tbody) return;
   tbody.replaceChildren();
   const rows = [...summary.samples].sort((a, b) => a.timeMs - b.timeMs).slice(0, 200);
   for (const s of rows) {
@@ -157,6 +151,11 @@ export function updateRadarHud(el, { sample, product, loading, error } = {}) {
     stateEl.textContent = sample ? formatFlightState(sample) : "";
     stateEl.hidden = !sample;
   }
+  const wxEl = el.querySelector("[data-hud-wx]");
+  if (wxEl) {
+    wxEl.textContent = sample ? formatRadarWx(sample) : "";
+    wxEl.hidden = !sample;
+  }
   el.querySelectorAll("[data-product]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.product === product);
   });
@@ -178,7 +177,7 @@ export function highlightReportSelection(root, summary, selected) {
   root.querySelectorAll("[data-table] tr").forEach((tr) => {
     tr.classList.toggle("is-selected", tr.dataset.key === key);
   });
-  updateSeriesCursor(root, summary.samples, selected);
+  updateSeriesCursor(document.getElementById("charts") || root, summary.samples, selected);
 }
 
 export function setPlayButtons(playing, enabled) {

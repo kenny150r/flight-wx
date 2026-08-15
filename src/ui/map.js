@@ -25,20 +25,78 @@ function sampleKey(sample) {
   return `${sample.timeMs}|${sample.stationId}|${sample.lat}|${sample.lon}`;
 }
 
+const RING_KM = [50, 100, 150, 200, 250];
+
 let map;
 let trackLayers = [];
 let radarLayer = null;
+let rangeRings = null;
+let ringKey = "";
 let selectedMarker = null;
 let onSelectCb = null;
 
 export function initMap(el) {
   if (map) return map;
-  map = L.map(el, { zoomControl: true, attributionControl: true }).setView([39.8, -98.5], 4);
+  map = L.map(el, { zoomControl: false, attributionControl: true }).setView([39.8, -98.5], 4);
+  L.control.zoom({ position: "bottomleft" }).addTo(map);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution: "&copy; OpenStreetMap &copy; CARTO",
     maxZoom: 18,
   }).addTo(map);
+  window.addEventListener("resize", invalidateMapSize);
+  requestAnimationFrame(invalidateMapSize);
   return map;
+}
+
+export function invalidateMapSize() {
+  map?.invalidateSize();
+}
+
+export function drawRangeRings(lat, lon, maxRangeKm = 230, stationId = "") {
+  if (!map || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+  const key = `${lat.toFixed(4)}|${lon.toFixed(4)}|${Math.round(maxRangeKm || 0)}|${stationId}`;
+  if (key === ringKey && rangeRings) return;
+  clearRangeRings();
+  rangeRings = L.layerGroup();
+  const limit = Number.isFinite(maxRangeKm) ? maxRangeKm : 230;
+  for (const km of RING_KM) {
+    if (km > limit + 5) continue;
+    L.circle([lat, lon], {
+      radius: km * 1000,
+      color: "rgba(0, 212, 255, 0.2)",
+      fill: false,
+      weight: 1,
+      dashArray: "4 6",
+      interactive: false,
+    }).addTo(rangeRings);
+  }
+  L.circleMarker([lat, lon], {
+    radius: 5,
+    color: "#00d4ff",
+    fillColor: "#00d4ff",
+    fillOpacity: 1,
+    weight: 2,
+    interactive: false,
+  }).addTo(rangeRings);
+  if (stationId) {
+    L.marker([lat, lon], {
+      icon: L.divIcon({
+        className: "radar-site-label",
+        html: `<span>${stationId}</span>`,
+        iconSize: [56, 14],
+        iconAnchor: [28, -8],
+      }),
+      interactive: false,
+    }).addTo(rangeRings);
+  }
+  rangeRings.addTo(map);
+  ringKey = key;
+}
+
+export function clearRangeRings() {
+  if (rangeRings && map) map.removeLayer(rangeRings);
+  rangeRings = null;
+  ringKey = "";
 }
 
 function clearTrack() {
@@ -111,6 +169,7 @@ export function showRadarFrame(frame, sample, { zoom = true } = {}) {
     radarLayer = new RadarGLLayer(frame, decoded, { opacity: 0.82 });
     radarLayer.addTo(map);
   }
+  drawRangeRings(frame.lat, frame.lon, frame.max_range_km, frame.station || sample?.stationId);
   if (sample) {
     if (zoom) zoomToSample(sample);
     highlightSample(sample, { openPopup: false });
@@ -122,6 +181,7 @@ export function clearRadar() {
     map.removeLayer(radarLayer);
     radarLayer = null;
   }
+  clearRangeRings();
 }
 
 export { sampleKey };

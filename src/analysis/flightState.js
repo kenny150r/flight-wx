@@ -51,6 +51,23 @@ export function enrichFlightState(points) {
   });
 }
 
+export function formatRadarWx(sample) {
+  if (!sample) return "";
+  return [
+    Number.isFinite(sample.dbz) ? `${sample.dbz.toFixed(1)} dBZ` : "",
+    Number.isFinite(sample.compositeDbz) ? `${sample.compositeDbz.toFixed(1)} comp` : "",
+    Number.isFinite(sample.vrMs) ? `${(sample.vrMs * MS_TO_KT).toFixed(0)} kt Vr` : "",
+    Number.isFinite(sample.horizShearS ?? sample.azShearS)
+      ? `H ${(sample.horizShearS ?? sample.azShearS).toFixed(3)} s⁻¹`
+      : "",
+    Number.isFinite(sample.vertShearS) ? `V ${sample.vertShearS.toFixed(3)} s⁻¹` : "",
+  ].filter(Boolean).join(" · ");
+}
+
+export function formatSampleOverlay(sample) {
+  return [formatFlightState(sample), formatRadarWx(sample)].filter(Boolean).join("\n");
+}
+
 export function formatFlightState(sample, { coords = false } = {}) {
   if (!sample) return "";
   const fl = sample.flightLevel || flightLevel(sample.altFt);

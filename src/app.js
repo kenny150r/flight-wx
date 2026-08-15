@@ -5,7 +5,7 @@ import { loadRadarForSample } from "./analysis/loadRadar.js";
 import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, sleep } from "./analysis/playback.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
-import { clearRadar, highlightSample, initMap, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
+import { clearRadar, highlightSample, initMap, invalidateMapSize, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
 import {
   hideProgress,
   highlightReportSelection,
@@ -105,9 +105,18 @@ export function boot() {
     return playableSamples(summary?.samples || []).length > 0;
   }
 
+  function setResultsVisible(visible) {
+    report.hidden = !visible;
+    const bottom = $("bottom");
+    if (bottom) bottom.hidden = !visible;
+    requestAnimationFrame(invalidateMapSize);
+  }
+
   function setPlayStatus(text) {
     const el = $("play-status");
-    if (el) el.textContent = text;
+    if (!el) return;
+    el.textContent = text || "";
+    el.hidden = !playing || !text;
   }
 
   function refreshView() {
@@ -119,7 +128,7 @@ export function boot() {
   function stopPlayback() {
     playing = false;
     setPlayButtons(false, canPlay());
-    if (canPlay()) setPlayStatus("Steps through each station’s closest-beam reflectivity");
+    setPlayStatus("");
   }
 
   async function playFlight() {
@@ -136,7 +145,7 @@ export function boot() {
     }
     playing = false;
     setPlayButtons(false, canPlay());
-    setPlayStatus("Steps through each station’s closest-beam reflectivity");
+    setPlayStatus("");
   }
 
   async function selectSample(sample, { reload = false, quiet = false, product: nextProduct, zoom } = {}) {
@@ -158,7 +167,7 @@ export function boot() {
     if (quiet) {
       const tilt = Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "tilt n/a";
       const when = new Date(sample.timeMs).toISOString().slice(11, 16);
-      setPlayStatus(`${sample.stationId} · ${when}Z · ${tilt} beam`);
+      setPlayStatus(`Playing · ${sample.stationId} · ${when}Z · ${tilt}`);
     }
     if (sameFrame) {
       updateRadarHud(hud, { sample, product });
@@ -189,7 +198,7 @@ export function boot() {
     const hex = $("hex").value.trim();
     const file = $("track-file").files[0];
     writeParams({ flight, date: dateClean, hex });
-    report.hidden = true;
+    setResultsVisible(false);
     stopPlayback();
     selected = null;
     loadedKey = "";
@@ -230,6 +239,7 @@ export function boot() {
         return;
       }
       refreshView();
+      setResultsVisible(true);
       setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Play flight or click the time series to load scans.`, "ok");
     } catch (err) {
       hideProgress(progress);

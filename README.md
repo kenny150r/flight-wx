@@ -16,7 +16,7 @@ npm test
 npm run dev
 ```
 
-Open http://localhost:8000.
+Open http://localhost:8000. The map is the main stage; peak cards sit in a slim rail, and time series run along the bottom.
 
 ## Track upload
 

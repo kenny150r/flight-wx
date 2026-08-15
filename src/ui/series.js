@@ -47,7 +47,7 @@ function cursorX(samples, selected, w, pad) {
 
 function drawChart(el, { title, unit, samples, selected, getter, minY, maxY, color, onSelect }) {
   const w = 360;
-  const h = 92;
+  const h = 80;
   const pad = { l: 28, r: 8, t: 16, b: 14 };
   const sorted = [...samples].sort((a, b) => a.timeMs - b.timeMs);
   const points = pathFor(sorted, getter, minY, maxY, w, h, pad);

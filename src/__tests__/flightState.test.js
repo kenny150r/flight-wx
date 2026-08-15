@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enrichFlightState, flightLevel, formatFlightState } from "../analysis/flightState.js";
+import { enrichFlightState, flightLevel, formatFlightState, formatRadarWx } from "../analysis/flightState.js";
 
 describe("flightState", () => {
   it("formats flight level", () => {
@@ -44,5 +44,20 @@ describe("flightState", () => {
     expect(text).toContain("HDG 247°");
     expect(text).toContain("438 kt GS");
     expect(text).toContain("-180 fpm");
+  });
+
+  it("formats radar conditions for the play overlay", () => {
+    const text = formatRadarWx({
+      dbz: 28.1,
+      compositeDbz: 41.2,
+      vrMs: -6.17,
+      horizShearS: 0.002,
+      vertShearS: 0.004,
+    });
+    expect(text).toContain("28.1 dBZ");
+    expect(text).toContain("41.2 comp");
+    expect(text).toContain("kt Vr");
+    expect(text).toContain("H 0.002");
+    expect(text).toContain("V 0.004");
   });
 });
