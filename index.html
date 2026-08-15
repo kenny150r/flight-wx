@@ -75,6 +75,9 @@
       </div>
       <div class="play-bar">
         <button type="button" id="play-flight" data-play-flight disabled>Play flight</button>
+        <input type="range" data-play-slider min="0" max="0" value="0" disabled aria-label="Flight time">
+        <span data-play-slider-label class="play-slider-label"></span>
+        <span data-cache-progress class="cache-progress"></span>
       </div>
       <details class="notes-panel">
         <summary>Notes</summary>
@@ -89,6 +92,9 @@
         <div data-hud-state class="hud-state" hidden></div>
         <div data-hud-wx class="hud-wx" hidden></div>
         <div id="play-status" class="hud-play" hidden></div>
+        <div class="hud-scrub">
+          <input type="range" data-play-slider min="0" max="0" value="0" disabled aria-label="Flight time">
+        </div>
         <div class="hud-actions">
           <button type="button" data-play-flight disabled>Play flight</button>
           <button type="button" data-product="reflectivity">Reflectivity</button>
@@ -100,6 +106,11 @@
   </div>
 
   <section id="bottom" class="bottom" hidden>
+    <div class="timeline">
+      <button type="button" data-play-flight disabled>Play flight</button>
+      <input type="range" data-play-slider min="0" max="0" value="0" disabled aria-label="Flight time">
+      <span data-play-slider-label class="play-slider-label"></span>
+    </div>
     <div id="charts" class="charts">
       <div class="series" data-series="dbz"></div>
       <div class="series" data-series="composite"></div>

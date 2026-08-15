@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextPlayIndex, playbackFrameKey, playableSamples } from "../analysis/playback.js";
+import { nextPlayIndex, playbackFrameKey, playableSamples, playIndexOf } from "../analysis/playback.js";
 
 const samples = [
   { timeMs: 2000, stationId: "KILN", s3Key: "b", elevation: 1.5 },
@@ -27,6 +27,7 @@ describe("playback", () => {
 
   it("resumes after the selected sample and wraps to the start", () => {
     const playable = playableSamples(samples);
+    expect(playIndexOf(playable, playable[0])).toBe(0);
     expect(nextPlayIndex(playable, playable[0])).toBe(1);
     expect(nextPlayIndex(playable, playable[1])).toBe(0);
   });

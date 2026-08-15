@@ -1,8 +1,8 @@
 import { EXAMPLE_FLIGHT } from "./adsb/ident.js";
 import { lookupFlightTrack } from "./adsb/lookup.js";
 import { parseTrackFile } from "./adsb/parseTrack.js";
-import { loadRadarForSample } from "./analysis/loadRadar.js";
-import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, sleep } from "./analysis/playback.js";
+import { clearFrameCache, getCachedFrame, loadCachedRadar, prefetchPlayFrames } from "./analysis/frameCache.js";
+import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, playIndexOf, sleep } from "./analysis/playback.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
 import { clearRadar, highlightSample, initMap, invalidateMapSize, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
@@ -11,6 +11,7 @@ import {
   highlightReportSelection,
   renderReport,
   setPlayButtons,
+  setPlaySlider,
   setProgress,
   setStatus,
   updateRadarHud,
@@ -56,6 +57,7 @@ export function boot() {
   let loadToken = 0;
   let loadedKey = "";
   let playing = false;
+  let cacheText = "";
 
   const params = readParams();
   if (params.flight) $("flight").value = params.flight;
@@ -83,10 +85,20 @@ export function boot() {
     });
   });
 
+  document.querySelectorAll("[data-play-slider]").forEach((el) => {
+    el.addEventListener("input", () => {
+      const samples = playableSamples(summary?.samples || []);
+      const index = Number(el.value);
+      if (!samples[index]) return;
+      seekTo(index, { quiet: true, zoom: false, keepPlaying: playing });
+    });
+  });
+
   hud.querySelectorAll("[data-product]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       product = btn.dataset.product;
       loadedKey = "";
+      startPrefetch();
       if (selected) await selectSample(selected, { reload: true });
     });
   });
@@ -119,10 +131,38 @@ export function boot() {
     el.hidden = !playing || !text;
   }
 
+  function sliderLabel(samples, index) {
+    const sample = samples[index];
+    if (!sample) return "";
+    const when = new Date(sample.timeMs).toISOString().slice(11, 16);
+    return `${when}Z · ${sample.stationId} · ${index + 1}/${samples.length}`;
+  }
+
+  function syncSlider(index) {
+    const samples = playableSamples(summary?.samples || []);
+    const i = Number.isFinite(index) ? index : playIndexOf(samples, selected);
+    setPlaySlider({
+      enabled: canPlay(),
+      index: i,
+      total: samples.length,
+      label: sliderLabel(samples, i),
+      cacheText,
+    });
+  }
+
   function refreshView() {
     renderReport(report, summary, meta, { onSelect: (sample, opts) => selectSample(sample, opts), selected });
     renderTrack(summary, { onSelect: (sample, opts) => selectSample(sample, opts), selected });
     setPlayButtons(playing, canPlay());
+    syncSlider();
+  }
+
+  function seekTo(index, opts = {}) {
+    const samples = playableSamples(summary?.samples || []);
+    const sample = samples[Math.max(0, Math.min(index, samples.length - 1))];
+    if (!sample) return;
+    syncSlider(index);
+    return selectSample(sample, opts);
   }
 
   function stopPlayback() {
@@ -139,18 +179,19 @@ export function boot() {
     setPlayButtons(true, true);
     let i = nextPlayIndex(samples, selected);
     while (playing && i < samples.length) {
-      await selectSample(samples[i], { quiet: true });
-      i += 1;
-      if (playing) await sleep(PLAY_STEP_MS);
+      await selectSample(samples[i], { quiet: true, keepPlaying: true });
+      if (!playing) break;
+      await sleep(PLAY_STEP_MS);
+      i = playIndexOf(playableSamples(summary.samples), selected) + 1;
     }
     playing = false;
     setPlayButtons(false, canPlay());
     setPlayStatus("");
   }
 
-  async function selectSample(sample, { reload = false, quiet = false, product: nextProduct, zoom } = {}) {
+  async function selectSample(sample, { reload = false, quiet = false, product: nextProduct, zoom, keepPlaying = false } = {}) {
     if (!sample) return;
-    if (!quiet) stopPlayback();
+    if (!quiet && !keepPlaying) stopPlayback();
     if (nextProduct && nextProduct !== product) {
       product = nextProduct;
       reload = true;
@@ -158,13 +199,15 @@ export function boot() {
     }
     const shouldZoom = zoom ?? !quiet;
     const frameKey = playbackFrameKey(sample, product);
+    const cached = !reload && getCachedFrame(frameKey);
     const sameFrame = !reload && loadedKey && loadedKey === frameKey;
     selected = sample;
     if (shouldZoom) zoomToSample(sample);
     highlightSample(sample, { openPopup: !quiet, follow: quiet && !shouldZoom });
     if (quiet && summary) highlightReportSelection(report, summary, selected);
     else if (summary) refreshView();
-    if (quiet) {
+    else syncSlider();
+    if (playing) {
       const tilt = Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "tilt n/a";
       const when = new Date(sample.timeMs).toISOString().slice(11, 16);
       setPlayStatus(`Playing · ${sample.stationId} · ${when}Z · ${tilt}`);
@@ -173,10 +216,17 @@ export function boot() {
       updateRadarHud(hud, { sample, product });
       return;
     }
+    if (cached) {
+      loadedKey = frameKey;
+      showRadarFrame(cached, sample, { zoom: quiet });
+      updateRadarHud(hud, { sample, product });
+      prefetchAhead(sample);
+      return;
+    }
     const token = ++loadToken;
     updateRadarHud(hud, { sample, product, loading: { text: `Loading ${sample.stationId}…` } });
     try {
-      const frame = await loadRadarForSample(sample, product, {
+      const frame = await loadCachedRadar(sample, product, {
         onProgress: (p) => {
           if (token === loadToken) updateRadarHud(hud, { sample, product, loading: p });
         },
@@ -185,11 +235,29 @@ export function boot() {
       loadedKey = frameKey;
       showRadarFrame(frame, sample, { zoom: quiet });
       updateRadarHud(hud, { sample, product });
+      prefetchAhead(sample);
     } catch (err) {
       if (token !== loadToken) return;
       loadedKey = "";
       updateRadarHud(hud, { sample, product, error: err.message || String(err) });
     }
+  }
+
+  function prefetchAhead(fromSample) {
+    const samples = playableSamples(summary?.samples || []);
+    const i = playIndexOf(samples, fromSample);
+    prefetchPlayFrames(samples.slice(i, i + 16), product, { concurrency: 1 }).catch(() => {});
+  }
+
+  function startPrefetch() {
+    const samples = playableSamples(summary?.samples || []);
+    prefetchPlayFrames(samples, product, {
+      concurrency: 1,
+      onProgress: ({ done, total }) => {
+        cacheText = done < total ? `Cached ${done}/${total} scans` : "Scans cached";
+        syncSlider();
+      },
+    }).catch(() => {});
   }
 
   async function run() {
@@ -202,6 +270,8 @@ export function boot() {
     stopPlayback();
     selected = null;
     loadedKey = "";
+    cacheText = "";
+    clearFrameCache();
     clearRadar();
     updateRadarHud(hud, {});
     setStatus(status, "", "");
@@ -240,7 +310,8 @@ export function boot() {
       }
       refreshView();
       setResultsVisible(true);
-      setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Play flight or click the time series to load scans.`, "ok");
+      startPrefetch();
+      setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Play flight or drag the slider to scrub.`, "ok");
     } catch (err) {
       hideProgress(progress);
       setStatus(status, err.message || String(err), "error");

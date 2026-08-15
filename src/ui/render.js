@@ -174,7 +174,7 @@ export function highlightReportSelection(root, summary, selected) {
     root.querySelector(`[data-card=${key}]`)?.classList.toggle("is-selected", sameSample(selected, sample));
   }
   const key = selected ? `${selected.timeMs}|${selected.stationId}|${selected.lat}|${selected.lon}` : "";
-  root.querySelectorAll("[data-table] tr").forEach((tr) => {
+  document.querySelectorAll("[data-table] tr").forEach((tr) => {
     tr.classList.toggle("is-selected", tr.dataset.key === key);
   });
   updateSeriesCursor(document.getElementById("charts") || root, summary.samples, selected);
@@ -184,5 +184,19 @@ export function setPlayButtons(playing, enabled) {
   document.querySelectorAll("[data-play-flight]").forEach((btn) => {
     btn.disabled = !enabled;
     btn.textContent = playing ? "Pause" : "Play flight";
+  });
+}
+
+export function setPlaySlider({ enabled, index = 0, total = 0, label = "", cacheText = "" } = {}) {
+  document.querySelectorAll("[data-play-slider]").forEach((el) => {
+    el.disabled = !enabled;
+    el.max = String(Math.max(0, total - 1));
+    el.value = String(index);
+  });
+  document.querySelectorAll("[data-play-slider-label]").forEach((el) => {
+    el.textContent = label;
+  });
+  document.querySelectorAll("[data-cache-progress]").forEach((el) => {
+    el.textContent = cacheText;
   });
 }
