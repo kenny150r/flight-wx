@@ -6,6 +6,8 @@ Live: https://kenny150r.github.io/flight-wx/
 
 Enter a flight number and UTC date, or upload a CSV/GeoJSON track. The app looks up a public ADS-B trace when it can, walks the path across CONUS WSR-88D sites, downloads NOAA Level II volumes from the Unidata S3 archive, and samples reflectivity and velocity at flight level.
 
+**Example:** [Endeavor Air 4985 on 17 Jul 2025](https://kenny150r.github.io/flight-wx/?flight=EDV4985&date=20250717) (JFK–CVG, also `9E4985` / `DL4985`). Public historical ADS-B is not available for that day, so the app uses a bundled representative track along the scheduled route.
+
 ## Run locally
 
 ```bash

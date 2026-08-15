@@ -1,5 +1,5 @@
-import { identCandidates, normalizeHex, normalizeIdent } from "./ident.js";
-import { parseReadsbTrace } from "./parseTrack.js";
+import { EXAMPLE_FLIGHT, identCandidates, isExampleFlight, normalizeHex, normalizeIdent } from "./ident.js";
+import { parseCsvTrack, parseReadsbTrace } from "./parseTrack.js";
 
 const LIVE_ENDPOINTS = [
   (id) => `https://api.adsb.lol/v2/callsign/${encodeURIComponent(id)}`,
@@ -121,7 +121,7 @@ export async function lookupFlightTrack({ flight, dateClean, hex, signal } = {})
     notes.push("No globe-history trace for that hex (CORS or missing day).");
   }
 
-  if (isToday(dateClean) || !hexNorm) {
+  if (isToday(dateClean)) {
     const live = await fetchLiveAircraft(candidates, { signal });
     if (live) {
       const traced = await fetchTrace(live.hex, dateClean, callsign || live.flight, { signal });
@@ -154,6 +154,24 @@ export async function lookupFlightTrack({ flight, dateClean, hex, signal } = {})
     }
   }
 
+  if (isExampleFlight(flight, dateClean)) {
+    const bundled = await loadBundledExampleTrack();
+    if (bundled.length) {
+      return {
+        points: bundled,
+        callsign: "EDV4985",
+        hex: hexNorm || null,
+        route: route || {
+          origin: "KJFK",
+          destination: "KCVG",
+          airline: "Endeavor Air",
+        },
+        source: "example-track",
+        notes: ["Using the bundled Endeavor 4985 / 17 Jul 2025 JFK–CVG example track (public historical ADS-B was not available)."],
+      };
+    }
+  }
+
   return {
     points: [],
     callsign,
@@ -162,4 +180,11 @@ export async function lookupFlightTrack({ flight, dateClean, hex, signal } = {})
     source: null,
     notes: notes.length ? notes : ["Could not find a public track for this flight and date."],
   };
+}
+
+export async function loadBundledExampleTrack() {
+  const url = `${import.meta.env.BASE_URL}${EXAMPLE_FLIGHT.trackUrl}`;
+  const resp = await fetch(url);
+  if (!resp.ok) return [];
+  return parseCsvTrack(await resp.text());
 }

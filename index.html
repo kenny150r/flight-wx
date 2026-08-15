@@ -27,7 +27,7 @@
     <form id="analyze-form">
       <div class="row">
         <label>Flight
-          <input id="flight" name="flight" type="text" placeholder="UAL123 or UA123" autocomplete="off">
+          <input id="flight" name="flight" type="text" placeholder="EDV4985, 9E4985, or DL4985" autocomplete="off">
         </label>
         <label>Date (UTC)
           <input id="date" name="date" type="date">
@@ -40,6 +40,7 @@
         <input id="track-file" name="track" type="file" accept=".csv,.json,.geojson,text/csv,application/json">
       </label>
       <button type="submit">Analyze flight</button>
+      <button type="button" id="example-flight" class="example">Try example: Endeavor 4985 · 17 Jul 2025 (JFK–CVG)</button>
     </form>
 
     <div id="status" class="status" hidden></div>

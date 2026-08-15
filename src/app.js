@@ -1,3 +1,4 @@
+import { EXAMPLE_FLIGHT } from "./adsb/ident.js";
 import { lookupFlightTrack } from "./adsb/lookup.js";
 import { parseTrackFile } from "./adsb/parseTrack.js";
 import { analyzeTrack } from "./analysis/run.js";
@@ -46,6 +47,14 @@ export function boot() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    await run();
+  });
+
+  $("example-flight").addEventListener("click", async () => {
+    $("flight").value = EXAMPLE_FLIGHT.flight;
+    $("date").value = EXAMPLE_FLIGHT.dateInput;
+    $("hex").value = "";
+    $("track-file").value = "";
     await run();
   });
 

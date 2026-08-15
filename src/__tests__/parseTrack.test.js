@@ -1,5 +1,6 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { identCandidates, normalizeHex, normalizeIdent } from "../adsb/ident.js";
+import { identCandidates, isExampleFlight, normalizeHex, normalizeIdent } from "../adsb/ident.js";
 import { parseCsvTrack, parseGeoJsonTrack, parseReadsbTrace, parseTrackFile } from "../adsb/parseTrack.js";
 
 describe("ident", () => {
@@ -19,6 +20,17 @@ describe("ident", () => {
 
   it("returns lookup candidates", () => {
     expect(identCandidates("UA123")).toContain("UAL123");
+  });
+
+  it("includes Endeavor codeshares for Delta 4985", () => {
+    expect(identCandidates("DL4985")).toContain("EDV4985");
+    expect(identCandidates("9E4985")).toContain("EDV4985");
+  });
+
+  it("recognizes the Endeavor 4985 example date", () => {
+    expect(isExampleFlight("9E4985", "20250717")).toBe(true);
+    expect(isExampleFlight("DL4985", "20250717")).toBe(true);
+    expect(isExampleFlight("EDV4985", "20250716")).toBe(false);
   });
 });
 
@@ -59,5 +71,13 @@ describe("track parse", () => {
   it("detects JSON from file contents", () => {
     const points = parseTrackFile("track.csv", '{"type":"Point","coordinates":[-97,35]}');
     expect(points).toHaveLength(1);
+  });
+
+  it("parses the bundled Endeavor 4985 example track", () => {
+    const csv = readFileSync(new URL("../../public/examples/edv4985-20250717.csv", import.meta.url), "utf8");
+    const points = parseCsvTrack(csv);
+    expect(points.length).toBeGreaterThan(100);
+    expect(points[0].lat).toBeCloseTo(40.64, 1);
+    expect(points[points.length - 1].lon).toBeCloseTo(-84.67, 1);
   });
 });
