@@ -157,6 +157,12 @@ button.example {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px 14px;
+  cursor: pointer;
+}
+
+.card.is-selected,
+tr.is-selected {
+  outline: 1px solid var(--warn);
 }
 
 .card h3 {
@@ -217,6 +223,73 @@ th, td {
 }
 
 th { color: var(--muted); font-weight: 600; }
+
+tr { cursor: pointer; }
+
+.series {
+  margin-top: 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px 4px;
+}
+
+.series-head {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.series-head span { font-weight: 600; }
+
+.series svg {
+  width: 100%;
+  height: 88px;
+  cursor: crosshair;
+  display: block;
+}
+
+.series .axis {
+  fill: var(--muted);
+  font-size: 9px;
+}
+
+.radar-hud {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 500;
+  background: rgba(12, 17, 23, 0.88);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  max-width: min(420px, calc(100% - 24px));
+}
+
+.hud-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.radar-hud button {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.radar-hud button.is-active {
+  background: var(--accent);
+  color: #06281e;
+}
+
+.radar-hud button.ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
 
 @media (max-width: 860px) {
   body { grid-template-columns: 1fr; }

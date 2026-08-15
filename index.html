@@ -71,6 +71,8 @@
           <div class="metric-meta"></div>
         </article>
       </div>
+      <div class="series" data-series="dbz"></div>
+      <div class="series" data-series="vel"></div>
       <p class="notes" data-notes></p>
       <div class="table-wrap">
         <table>
@@ -87,6 +89,14 @@
 
   <main class="stage">
     <div id="map"></div>
+    <div id="radar-hud" class="radar-hud" hidden>
+      <div data-hud-title>Radar</div>
+      <div class="hud-actions">
+        <button type="button" data-product="reflectivity">Reflectivity</button>
+        <button type="button" data-product="velocity">Velocity</button>
+        <button type="button" id="clear-radar" class="ghost">Clear</button>
+      </div>
+    </div>
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

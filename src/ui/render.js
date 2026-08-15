@@ -1,8 +1,9 @@
 import { MS_TO_KT } from "../analysis/shear.js";
+import { renderSeries } from "./series.js";
 
-function fmt(n, digits = 1, suffix = "") {
+function fmt(n, digits = 1) {
   if (!Number.isFinite(n)) return "—";
-  return `${n.toFixed(digits)}${suffix}`;
+  return n.toFixed(digits);
 }
 
 function fmtTime(ms) {
@@ -19,8 +20,12 @@ function peakMeta(peak) {
   return [
     fmtTime(s.timeMs),
     `${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}`,
-    [s.stationId, fl, `tilt ${tilt}`, beam].filter(Boolean).join(" · "),
+    [s.stationId, fl, `closest tilt ${tilt}`, beam].filter(Boolean).join(" · "),
   ].join("\n");
+}
+
+function sameSample(a, b) {
+  return a && b && a.timeMs === b.timeMs && a.stationId === b.stationId && a.lat === b.lat && a.lon === b.lon;
 }
 
 export function setStatus(el, text, kind = "") {
@@ -47,7 +52,7 @@ export function hideProgress(els) {
   els.wrap.hidden = true;
 }
 
-export function renderReport(root, summary, meta) {
+export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   root.hidden = false;
   const maxDbz = summary.maxDbz?.value;
   const nearbyDbz = summary.maxNearbyDbz?.value;
@@ -80,14 +85,29 @@ export function renderReport(root, summary, meta) {
   if (summary.strideSec && summary.strideSec > 60) notes.push(`Stride increased to ${summary.strideSec}s to stay under the volume budget.`);
   if (summary.lowConfidenceCount) notes.push(`${summary.lowConfidenceCount} low-confidence samples (beam miss or missing gate).`);
   if (meta?.notes?.length) notes.push(...meta.notes);
+  notes.push("Each point uses the tilt whose 4/3-earth beam height is closest to the aircraft. Click a peak, chart, or table row to load that scan on the map.");
   notes.push("Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only.");
   root.querySelector("[data-notes]").textContent = notes.join("\n");
+
+  const cardMap = {
+    dbz: summary.maxDbz?.sample,
+    vel: summary.maxVr?.sample,
+    shear: shearPeak?.sample,
+  };
+  for (const [key, sample] of Object.entries(cardMap)) {
+    const card = root.querySelector(`[data-card=${key}]`);
+    card.classList.toggle("is-selected", sameSample(selected, sample));
+    card.onclick = sample ? () => onSelect?.(sample) : null;
+  }
+
+  renderSeries(root, summary.samples, selected, onSelect);
 
   const tbody = root.querySelector("[data-table]");
   tbody.replaceChildren();
   const rows = [...summary.samples].sort((a, b) => a.timeMs - b.timeMs).slice(0, 200);
   for (const s of rows) {
     const tr = document.createElement("tr");
+    tr.className = sameSample(selected, s) ? "is-selected" : "";
     tr.innerHTML = `
       <td>${fmtTime(s.timeMs)}</td>
       <td>${s.stationId || "—"}</td>
@@ -96,6 +116,27 @@ export function renderReport(root, summary, meta) {
       <td>${fmt(s.radialShearS, 4)}</td>
       <td>${fmt(s.azShearS, 4)}</td>
       <td>${s.lowConfidence ? s.reason || "low" : ""}</td>`;
+    tr.addEventListener("click", () => onSelect?.(s));
     tbody.appendChild(tr);
   }
+}
+
+export function updateRadarHud(el, { sample, product, loading, error } = {}) {
+  if (!el) return;
+  if (!sample && !loading && !error) {
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  const tilt = Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° closest beam` : "tilt n/a";
+  const when = sample ? new Date(sample.timeMs).toISOString().replace(".000Z", "Z") : "";
+  const title = loading
+    ? (loading.text || "Loading radar…")
+    : error
+      ? error
+      : `${sample.stationId} · ${when} · ${tilt}`;
+  el.querySelector("[data-hud-title]").textContent = title;
+  el.querySelectorAll("[data-product]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.product === product);
+  });
 }

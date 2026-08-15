@@ -1,4 +1,5 @@
 let sampleWorker = null;
+let l2Worker = null;
 let nextId = 1;
 const pending = new Map();
 const DECODE_TIMEOUT_MS = 180000;
@@ -30,6 +31,14 @@ function getSampleWorker() {
     bindWorker(sampleWorker);
   }
   return sampleWorker;
+}
+
+function getL2Worker() {
+  if (!l2Worker) {
+    l2Worker = new Worker(new URL("./l2Worker.js", import.meta.url), { type: "module" });
+    bindWorker(l2Worker);
+  }
+  return l2Worker;
 }
 
 function callWorker(worker, message, transfer = [], onProgress) {
@@ -69,4 +78,9 @@ function transferBytes(bytes) {
 export function sampleL2InWorker(bytes, options, onProgress) {
   const packed = transferBytes(bytes);
   return callWorker(getSampleWorker(), { bytes: packed.bytes, options }, packed.transfer, onProgress);
+}
+
+export function decodeL2InWorker(bytes, options, onProgress) {
+  const packed = transferBytes(bytes);
+  return callWorker(getL2Worker(), { bytes: packed.bytes, options }, packed.transfer, onProgress);
 }

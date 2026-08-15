@@ -1,10 +1,11 @@
 import { EXAMPLE_FLIGHT } from "./adsb/ident.js";
 import { lookupFlightTrack } from "./adsb/lookup.js";
 import { parseTrackFile } from "./adsb/parseTrack.js";
+import { loadRadarForSample } from "./analysis/loadRadar.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
-import { initMap, renderTrack } from "./ui/map.js";
-import { hideProgress, renderReport, setProgress, setStatus } from "./ui/render.js";
+import { clearRadar, highlightSample, initMap, renderTrack, showRadarFrame } from "./ui/map.js";
+import { hideProgress, renderReport, setProgress, setStatus, updateRadarHud } from "./ui/render.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -36,8 +37,14 @@ export function boot() {
     detail: $("progress-detail"),
   };
   const report = $("report");
-  const mapEl = $("map");
-  initMap(mapEl);
+  const hud = $("radar-hud");
+  initMap($("map"));
+
+  let summary = null;
+  let meta = null;
+  let selected = null;
+  let product = "reflectivity";
+  let loadToken = 0;
 
   const params = readParams();
   if (params.flight) $("flight").value = params.flight;
@@ -58,7 +65,52 @@ export function boot() {
     await run();
   });
 
+  hud.querySelectorAll("[data-product]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      product = btn.dataset.product;
+      if (selected) await selectSample(selected, { reload: true });
+    });
+  });
+  $("clear-radar").addEventListener("click", () => {
+    clearRadar();
+    selected = null;
+    updateRadarHud(hud, {});
+    if (summary) refreshView();
+  });
+
   if (params.flight && params.date) run();
+
+  function refreshView() {
+    renderReport(report, summary, meta, { onSelect: (sample) => selectSample(sample), selected });
+    renderTrack(summary, { onSelect: (sample) => selectSample(sample), selected });
+  }
+
+  async function selectSample(sample, { reload = false } = {}) {
+    if (!sample) return;
+    const same = selected && selected.timeMs === sample.timeMs && selected.s3Key === sample.s3Key
+      && selected.elevation === sample.elevation;
+    selected = sample;
+    highlightSample(sample);
+    if (summary) {
+      renderReport(report, summary, meta, { onSelect: (next) => selectSample(next), selected });
+    }
+    if (same && !reload) return;
+    const token = ++loadToken;
+    updateRadarHud(hud, { sample, product, loading: { text: `Loading ${sample.stationId}…` } });
+    try {
+      const frame = await loadRadarForSample(sample, product, {
+        onProgress: (p) => {
+          if (token === loadToken) updateRadarHud(hud, { sample, product, loading: p });
+        },
+      });
+      if (token !== loadToken) return;
+      showRadarFrame(frame, sample);
+      updateRadarHud(hud, { sample, product });
+    } catch (err) {
+      if (token !== loadToken) return;
+      updateRadarHud(hud, { sample, product, error: err.message || String(err) });
+    }
+  }
 
   async function run() {
     const flight = $("flight").value.trim();
@@ -67,12 +119,15 @@ export function boot() {
     const file = $("track-file").files[0];
     writeParams({ flight, date: dateClean, hex });
     report.hidden = true;
+    selected = null;
+    clearRadar();
+    updateRadarHud(hud, {});
     setStatus(status, "", "");
     setProgress(progress, { text: "Looking up flight track…" });
 
     try {
       let points = [];
-      let meta = { notes: [] };
+      meta = { notes: [] };
       if (file) {
         const text = await file.text();
         points = parseTrackFile(file.name, text);
@@ -93,7 +148,7 @@ export function boot() {
         }
       }
 
-      const summary = await analyzeTrack(points, {
+      summary = await analyzeTrack(points, {
         onProgress: (p) => setProgress(progress, p),
       });
       hideProgress(progress);
@@ -101,9 +156,8 @@ export function boot() {
         setStatus(status, "Track is outside CONUS NEXRAD coverage, or no Level II scans were found near those times.", "error");
         return;
       }
-      renderReport(report, summary, meta);
-      renderTrack(summary);
-      setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars.`, "ok");
+      refreshView();
+      setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Click a peak or the time series to load that scan.`, "ok");
     } catch (err) {
       hideProgress(progress);
       setStatus(status, err.message || String(err), "error");

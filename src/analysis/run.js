@@ -82,7 +82,12 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
       timeClean: volume.timeClean,
     }, (prog) => onProgress?.({ ...prog, done, total: plan.volumes.length, bytes }));
     done += 1;
-    return samples;
+    return samples.map((sample) => ({
+      ...sample,
+      s3Key: volume.key,
+      dateClean: volume.dateClean,
+      timeClean: volume.timeClean,
+    }));
   });
 
   const samples = sampleChunks.flat();
