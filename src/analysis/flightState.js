@@ -1,5 +1,6 @@
 import { bearingDeg, haversineKm } from "./geo.js";
 import { MS_TO_KT } from "./shear.js";
+import { formatTrackTime } from "./time.js";
 
 export function flightLevel(altFt) {
   if (!Number.isFinite(altFt)) return "";
@@ -93,9 +94,7 @@ export function formatFlightState(sample, { coords = false } = {}) {
 }
 
 export function flightStatePopupHtml(sample) {
-  const when = Number.isFinite(sample?.timeMs)
-    ? new Date(sample.timeMs).toISOString().replace(".000Z", "Z")
-    : "";
+  const when = formatTrackTime(sample?.timeMs, { lon: sample?.lon }).label;
   const radar = [
     sample?.stationId,
     Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° beam` : "",

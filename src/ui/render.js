@@ -1,4 +1,5 @@
 import { formatFlightState, formatRadarWx } from "../analysis/flightState.js";
+import { formatTrackTime } from "../analysis/time.js";
 import { MS_TO_KT } from "../analysis/shear.js";
 import { renderSeries, updateSeriesCursor } from "./series.js";
 
@@ -87,8 +88,8 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (summary.strideSec && summary.strideSec > 60) notes.push(`Stride increased to ${summary.strideSec}s to stay under the volume budget.`);
   if (summary.lowConfidenceCount) notes.push(`${summary.lowConfidenceCount} low-confidence samples (beam miss or missing gate).`);
   if (meta?.notes?.length) notes.push(...meta.notes);
-  notes.push("Max reflectivity is the closest-beam gate at flight level. Composite is the strongest gate in the column (any tilt) at that lat/lon. Click a peak card to zoom to that event.");
-  notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only.");
+  notes.push("Max reflectivity is the closest-beam gate at flight level. Composite is the strongest gate in the column (any tilt) at that lat/lon. Use Closest Beam or Base on the map to switch the overlay tilt. Click a peak card to zoom to that event.");
+  notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only. Times are UTC; popups also show local time from longitude.");
   const notesEl = root.querySelector("[data-notes]");
   if (notesEl) notesEl.textContent = notes.join("\n");
 
@@ -130,16 +131,20 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   }
 }
 
-export function updateRadarHud(el, { sample, product, loading, error } = {}) {
+export function updateRadarHud(el, { sample, product, tiltMode = "closest", loading, error } = {}) {
   if (!el) return;
   if (!sample && !loading && !error) {
     el.hidden = true;
     return;
   }
   el.hidden = false;
-  const tiltKind = sample?.tiltRole === "composite" ? "composite" : "closest beam";
-  const tilt = Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° ${tiltKind}` : "tilt n/a";
-  const when = sample ? new Date(sample.timeMs).toISOString().replace(".000Z", "Z") : "";
+  const tiltKind = tiltMode === "base"
+    ? "base"
+    : (sample?.tiltRole === "composite" ? "composite" : "closest beam");
+  const tilt = tiltMode === "base"
+    ? "base tilt"
+    : (Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° ${tiltKind}` : "tilt n/a");
+  const when = sample ? formatTrackTime(sample.timeMs, { lon: sample.lon }).label : "";
   const title = loading
     ? (loading.text || "Loading radar…")
     : error
@@ -158,6 +163,9 @@ export function updateRadarHud(el, { sample, product, loading, error } = {}) {
   }
   el.querySelectorAll("[data-product]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.product === product);
+  });
+  el.querySelectorAll("[data-tilt]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.tilt === tiltMode);
   });
 }
 

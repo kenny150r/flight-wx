@@ -6,11 +6,11 @@ const MAX_FRAMES = 64;
 const cache = new Map();
 const inflight = new Map();
 
-export function uniquePlayFrames(samples, product = "reflectivity") {
+export function uniquePlayFrames(samples, product = "reflectivity", tiltMode = "closest") {
   const seen = new Set();
   const out = [];
   for (const sample of playableSamples(samples)) {
-    const key = playbackFrameKey(sample, product);
+    const key = playbackFrameKey(sample, product, tiltMode);
     if (!key || seen.has(key)) continue;
     seen.add(key);
     out.push({ sample, key });
@@ -49,13 +49,13 @@ export function cachedFrameCount() {
   return cache.size;
 }
 
-export async function loadCachedRadar(sample, product = "reflectivity", { onProgress } = {}) {
-  const key = playbackFrameKey(sample, product);
+export async function loadCachedRadar(sample, product = "reflectivity", { onProgress, tiltMode = "closest" } = {}) {
+  const key = playbackFrameKey(sample, product, tiltMode);
   if (!key) throw new Error("This sample has no radar volume to load.");
   const hit = getCachedFrame(key);
   if (hit) return hit;
   if (inflight.has(key)) return inflight.get(key);
-  const pending = loadRadarForSample(sample, product, { onProgress })
+  const pending = loadRadarForSample(sample, product, { onProgress, tiltMode })
     .then((frame) => {
       setCachedFrame(key, frame);
       return frame;
@@ -68,8 +68,9 @@ export async function loadCachedRadar(sample, product = "reflectivity", { onProg
 export async function prefetchPlayFrames(samples, product = "reflectivity", {
   concurrency = defaultConcurrency("decode"),
   onProgress,
+  tiltMode = "closest",
 } = {}) {
-  const items = uniquePlayFrames(samples, product);
+  const items = uniquePlayFrames(samples, product, tiltMode);
   const pending = items.filter((item) => !hasCachedFrame(item.key) && !inflight.has(item.key));
   let done = items.length - pending.length;
   onProgress?.({ done, total: items.length });
@@ -78,7 +79,7 @@ export async function prefetchPlayFrames(samples, product = "reflectivity", {
     while (i < pending.length) {
       const item = pending[i++];
       try {
-        await loadCachedRadar(item.sample, product);
+        await loadCachedRadar(item.sample, product, { tiltMode });
       } catch {
         // Keep scrubbing usable even if one volume fails.
       }

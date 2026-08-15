@@ -39,7 +39,7 @@ function headerIndex(headers, names) {
 }
 
 export function parseCsvTrack(text) {
-  const lines = String(text || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const lines = String(text || "").split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
   if (lines.length < 2) throw new Error("CSV needs a header row and at least one point");
   const headers = lines[0].split(/,|\t/).map((h) => h.trim());
   const iTime = headerIndex(headers, ["time", "timestamp", "datetime", "utc", "timeutc"]);

@@ -177,7 +177,10 @@ export async function lookupFlightTrack({ flight, dateClean, hex, signal } = {})
           airline: "Endeavor Air",
         },
         source: "example-track",
-        notes: ["Using the bundled Endeavor 4985 / 17 Jul 2025 JFK–CVG example track (public historical ADS-B was not available)."],
+        notes: [
+          "Using the bundled Endeavor 4985 / 17 Jul 2025 JFK–CVG example track (public historical ADS-B was not available).",
+          "Path is representative. Times are UTC, aligned to the NTSB encounter at 10:53 EDT (14:53Z) near 18,000 ft on descent (DCA25LA272 / N330PQ).",
+        ],
       };
     }
   }

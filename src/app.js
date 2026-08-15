@@ -6,6 +6,7 @@ import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, playInd
 import { defaultConcurrency } from "./analysis/pool.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
+import { formatTrackTime } from "./analysis/time.js";
 import { buildShareSearch, clampShareFrame, parseShareSearch } from "./analysis/shareUrl.js";
 import { clearRadar, EVENT_ZOOM, highlightSample, initMap, invalidateMapSize, mapZoom, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
 import {
@@ -25,8 +26,8 @@ function readParams() {
   return parseShareSearch(window.location.search);
 }
 
-function writeParams({ flight, date, hex, frame, play } = {}) {
-  const query = buildShareSearch({ flight, date, hex, frame, play });
+function writeParams({ flight, date, hex, frame, play, tilt } = {}) {
+  const query = buildShareSearch({ flight, date, hex, frame, play, tilt });
   const next = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
   const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (current === next) return;
@@ -50,12 +51,14 @@ export function boot() {
   let meta = null;
   let selected = null;
   let product = "reflectivity";
+  let tiltMode = "closest";
   let loadToken = 0;
   let loadedKey = "";
   let playing = false;
   let cacheText = "";
 
   const params = readParams();
+  if (params.tilt === "base") tiltMode = "base";
   if (params.flight) $("flight").value = params.flight;
   if (params.date) $("date").value = cleanToDateInput(params.date) || params.date;
   if (params.hex) $("hex").value = params.hex;
@@ -98,6 +101,15 @@ export function boot() {
       if (selected) await selectSample(selected, { reload: true });
     });
   });
+  hud.querySelectorAll("[data-tilt]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      tiltMode = btn.dataset.tilt === "base" ? "base" : "closest";
+      loadedKey = "";
+      startPrefetch();
+      syncShareUrl();
+      if (selected) await selectSample(selected, { reload: true });
+    });
+  });
   $("clear-radar").addEventListener("click", () => {
     stopPlayback();
     clearRadar();
@@ -131,8 +143,8 @@ export function boot() {
   function sliderLabel(samples, index) {
     const sample = samples[index];
     if (!sample) return "";
-    const when = new Date(sample.timeMs).toISOString().slice(11, 16);
-    return `${when}Z · ${sample.stationId} · ${index + 1}/${samples.length}`;
+    const when = formatTrackTime(sample.timeMs, { lon: sample.lon });
+    return `${when.local || when.utc} · ${sample.stationId} · ${index + 1}/${samples.length}`;
   }
 
   function syncSlider(index) {
@@ -185,6 +197,7 @@ export function boot() {
       hex: $("hex").value.trim(),
       frame: selected && samples.length ? index + 1 : 0,
       play: playing,
+      tilt: tiltMode,
       ...extra,
     };
   }
@@ -237,7 +250,7 @@ export function boot() {
       loadedKey = "";
     }
     const shouldZoom = zoom ?? !quiet;
-    const frameKey = playbackFrameKey(sample, product);
+    const frameKey = playbackFrameKey(sample, product, tiltMode);
     const cached = !reload && getCachedFrame(frameKey);
     const sameFrame = !reload && loadedKey && loadedKey === frameKey;
     selected = sample;
@@ -247,41 +260,44 @@ export function boot() {
     else if (summary) refreshView();
     else syncSlider();
     if (playing) {
-      const tilt = Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "tilt n/a";
-      const when = new Date(sample.timeMs).toISOString().slice(11, 16);
-      setPlayStatus(`Playing · ${sample.stationId} · ${when}Z · ${tilt}`);
+      const tilt = tiltMode === "base"
+        ? "base"
+        : (Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "tilt n/a");
+      const when = formatTrackTime(sample.timeMs, { lon: sample.lon });
+      setPlayStatus(`Playing · ${sample.stationId} · ${when.local || when.utc} · ${tilt}`);
     }
     if (sameFrame) {
-      updateRadarHud(hud, { sample, product });
+      updateRadarHud(hud, { sample, product, tiltMode });
       syncShareUrl();
       return;
     }
     if (cached) {
       loadedKey = frameKey;
       showRadarFrame(cached, sample);
-      updateRadarHud(hud, { sample, product });
+      updateRadarHud(hud, { sample, product, tiltMode });
       prefetchAhead(sample);
       syncShareUrl();
       return;
     }
     const token = ++loadToken;
-    updateRadarHud(hud, { sample, product, loading: { text: `Loading ${sample.stationId}…` } });
+    updateRadarHud(hud, { sample, product, tiltMode, loading: { text: `Loading ${sample.stationId}…` } });
     try {
       const frame = await loadCachedRadar(sample, product, {
+        tiltMode,
         onProgress: (p) => {
-          if (token === loadToken) updateRadarHud(hud, { sample, product, loading: p });
+          if (token === loadToken) updateRadarHud(hud, { sample, product, tiltMode, loading: p });
         },
       });
       if (token !== loadToken) return;
       loadedKey = frameKey;
       showRadarFrame(frame, sample);
-      updateRadarHud(hud, { sample, product });
+      updateRadarHud(hud, { sample, product, tiltMode });
       prefetchAhead(sample);
       syncShareUrl();
     } catch (err) {
       if (token !== loadToken) return;
       loadedKey = "";
-      updateRadarHud(hud, { sample, product, error: err.message || String(err) });
+      updateRadarHud(hud, { sample, product, tiltMode, error: err.message || String(err) });
       syncShareUrl();
     }
   }
@@ -289,13 +305,17 @@ export function boot() {
   function prefetchAhead(fromSample) {
     const samples = playableSamples(summary?.samples || []);
     const i = playIndexOf(samples, fromSample);
-    prefetchPlayFrames(samples.slice(i, i + 16), product, { concurrency: defaultConcurrency("decode") }).catch(() => {});
+    prefetchPlayFrames(samples.slice(i, i + 16), product, {
+      concurrency: defaultConcurrency("decode"),
+      tiltMode,
+    }).catch(() => {});
   }
 
   function startPrefetch() {
     const samples = playableSamples(summary?.samples || []);
     prefetchPlayFrames(samples, product, {
       concurrency: defaultConcurrency("decode"),
+      tiltMode,
       onProgress: ({ done, total }) => {
         cacheText = done < total ? `Cached ${done}/${total} scans` : "Scans cached";
         syncSlider();
@@ -314,6 +334,7 @@ export function boot() {
       hex,
       frame: restore?.frame,
       play: restore?.play,
+      tilt: tiltMode,
     });
     setResultsVisible(false);
     stopPlayback();

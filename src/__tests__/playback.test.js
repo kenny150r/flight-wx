@@ -18,6 +18,8 @@ describe("playback", () => {
     const sample = { s3Key: "vol", elevation: 2.4 };
     expect(playbackFrameKey(sample, "reflectivity")).not.toBe(playbackFrameKey({ ...sample, elevation: 3.1 }, "reflectivity"));
     expect(playbackFrameKey(sample, "reflectivity")).not.toBe(playbackFrameKey(sample, "velocity"));
+    expect(playbackFrameKey(sample, "reflectivity", "base")).toBe("vol|base|reflectivity");
+    expect(playbackFrameKey(sample, "reflectivity", "base")).not.toBe(playbackFrameKey(sample, "reflectivity", "closest"));
   });
 
   it("sorts playable samples and drops those without a volume", () => {

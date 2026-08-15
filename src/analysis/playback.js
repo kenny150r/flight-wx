@@ -1,8 +1,10 @@
 export const PLAY_STEP_MS = 450;
 
-export function playbackFrameKey(sample, product = "reflectivity") {
+export function playbackFrameKey(sample, product = "reflectivity", tiltMode = "closest") {
   if (!sample?.s3Key) return "";
-  const tilt = Number.isFinite(sample.elevation) ? sample.elevation.toFixed(1) : "auto";
+  const tilt = tiltMode === "base"
+    ? "base"
+    : (Number.isFinite(sample.elevation) ? sample.elevation.toFixed(1) : "auto");
   return `${sample.s3Key}|${tilt}|${product}`;
 }
 

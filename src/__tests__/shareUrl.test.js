@@ -16,6 +16,7 @@ describe("shareUrl", () => {
       hex: "",
       frame: 12,
       play: true,
+      tilt: "closest",
     });
   });
 
@@ -27,7 +28,9 @@ describe("shareUrl", () => {
       hex: "",
       frame: 0,
       play: false,
+      tilt: "closest",
     });
+    expect(buildShareSearch({ flight: "EDV4985", date: "20250717", tilt: "base" })).toBe("flight=EDV4985&date=20250717&tilt=base");
   });
 
   it("clamps a shared frame to the playable range", () => {

@@ -18,5 +18,6 @@ describe("frameCache", () => {
     ], "reflectivity");
     expect(frames.map((f) => f.sample.timeMs)).toEqual([1000, 3000]);
     expect(frames[0].key).toContain("a|2.4|reflectivity");
+    expect(uniquePlayFrames(frames.map((f) => f.sample), "reflectivity", "base")[0].key).toContain("|base|reflectivity");
   });
 });

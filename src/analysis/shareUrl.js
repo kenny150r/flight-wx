@@ -7,16 +7,18 @@ export function parseShareSearch(search = "") {
     hex: q.get("hex") || "",
     frame: Number.isFinite(frame) && frame >= 1 ? frame : 0,
     play: q.get("play") === "1",
+    tilt: q.get("tilt") === "base" ? "base" : "closest",
   };
 }
 
-export function buildShareSearch({ flight, date, hex, frame, play } = {}) {
+export function buildShareSearch({ flight, date, hex, frame, play, tilt } = {}) {
   const q = new URLSearchParams();
   if (flight) q.set("flight", flight);
   if (date) q.set("date", date);
   if (hex) q.set("hex", hex);
   if (Number.isFinite(frame) && frame >= 1) q.set("frame", String(Math.floor(frame)));
   if (play) q.set("play", "1");
+  if (tilt === "base") q.set("tilt", "base");
   return q.toString();
 }
 
