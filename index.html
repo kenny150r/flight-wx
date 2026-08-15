@@ -71,6 +71,10 @@
           <div class="metric-meta"></div>
         </article>
       </div>
+      <div class="play-bar">
+        <button type="button" id="play-flight" data-play-flight disabled>Play flight</button>
+        <span id="play-status" class="play-status">Steps through each station’s closest-beam reflectivity</span>
+      </div>
       <div class="series" data-series="dbz"></div>
       <div class="series" data-series="vel"></div>
       <p class="notes" data-notes></p>
@@ -92,6 +96,7 @@
     <div id="radar-hud" class="radar-hud" hidden>
       <div data-hud-title>Radar</div>
       <div class="hud-actions">
+        <button type="button" data-play-flight disabled>Play flight</button>
         <button type="button" data-product="reflectivity">Reflectivity</button>
         <button type="button" data-product="velocity">Velocity</button>
         <button type="button" id="clear-radar" class="ghost">Clear</button>

@@ -2,10 +2,19 @@ import { EXAMPLE_FLIGHT } from "./adsb/ident.js";
 import { lookupFlightTrack } from "./adsb/lookup.js";
 import { parseTrackFile } from "./adsb/parseTrack.js";
 import { loadRadarForSample } from "./analysis/loadRadar.js";
+import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, sleep } from "./analysis/playback.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
 import { clearRadar, highlightSample, initMap, renderTrack, showRadarFrame } from "./ui/map.js";
-import { hideProgress, renderReport, setProgress, setStatus, updateRadarHud } from "./ui/render.js";
+import {
+  hideProgress,
+  highlightReportSelection,
+  renderReport,
+  setPlayButtons,
+  setProgress,
+  setStatus,
+  updateRadarHud,
+} from "./ui/render.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -45,6 +54,8 @@ export function boot() {
   let selected = null;
   let product = "reflectivity";
   let loadToken = 0;
+  let loadedKey = "";
+  let playing = false;
 
   const params = readParams();
   if (params.flight) $("flight").value = params.flight;
@@ -65,36 +76,87 @@ export function boot() {
     await run();
   });
 
+  document.querySelectorAll("[data-play-flight]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (playing) stopPlayback();
+      else playFlight();
+    });
+  });
+
   hud.querySelectorAll("[data-product]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       product = btn.dataset.product;
+      loadedKey = "";
       if (selected) await selectSample(selected, { reload: true });
     });
   });
   $("clear-radar").addEventListener("click", () => {
+    stopPlayback();
     clearRadar();
     selected = null;
+    loadedKey = "";
     updateRadarHud(hud, {});
     if (summary) refreshView();
   });
 
   if (params.flight && params.date) run();
 
+  function canPlay() {
+    return playableSamples(summary?.samples || []).length > 0;
+  }
+
+  function setPlayStatus(text) {
+    const el = $("play-status");
+    if (el) el.textContent = text;
+  }
+
   function refreshView() {
     renderReport(report, summary, meta, { onSelect: (sample) => selectSample(sample), selected });
     renderTrack(summary, { onSelect: (sample) => selectSample(sample), selected });
+    setPlayButtons(playing, canPlay());
   }
 
-  async function selectSample(sample, { reload = false } = {}) {
-    if (!sample) return;
-    const same = selected && selected.timeMs === sample.timeMs && selected.s3Key === sample.s3Key
-      && selected.elevation === sample.elevation;
-    selected = sample;
-    highlightSample(sample);
-    if (summary) {
-      renderReport(report, summary, meta, { onSelect: (next) => selectSample(next), selected });
+  function stopPlayback() {
+    playing = false;
+    setPlayButtons(false, canPlay());
+    if (canPlay()) setPlayStatus("Steps through each station’s closest-beam reflectivity");
+  }
+
+  async function playFlight() {
+    const samples = playableSamples(summary?.samples || []);
+    if (!samples.length || playing) return;
+    product = "reflectivity";
+    playing = true;
+    setPlayButtons(true, true);
+    let i = nextPlayIndex(samples, selected);
+    while (playing && i < samples.length) {
+      await selectSample(samples[i], { quiet: true });
+      i += 1;
+      if (playing) await sleep(PLAY_STEP_MS);
     }
-    if (same && !reload) return;
+    playing = false;
+    setPlayButtons(false, canPlay());
+    setPlayStatus("Steps through each station’s closest-beam reflectivity");
+  }
+
+  async function selectSample(sample, { reload = false, quiet = false } = {}) {
+    if (!sample) return;
+    if (!quiet) stopPlayback();
+    const frameKey = playbackFrameKey(sample, product);
+    const sameFrame = !reload && loadedKey && loadedKey === frameKey;
+    selected = sample;
+    highlightSample(sample, { openPopup: !quiet, follow: quiet });
+    if (quiet && summary) highlightReportSelection(report, summary, selected);
+    else if (summary) refreshView();
+    if (quiet) {
+      const tilt = Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "tilt n/a";
+      const when = new Date(sample.timeMs).toISOString().slice(11, 16);
+      setPlayStatus(`${sample.stationId} · ${when}Z · ${tilt} beam`);
+    }
+    if (sameFrame) {
+      updateRadarHud(hud, { sample, product });
+      return;
+    }
     const token = ++loadToken;
     updateRadarHud(hud, { sample, product, loading: { text: `Loading ${sample.stationId}…` } });
     try {
@@ -104,10 +166,12 @@ export function boot() {
         },
       });
       if (token !== loadToken) return;
+      loadedKey = frameKey;
       showRadarFrame(frame, sample);
       updateRadarHud(hud, { sample, product });
     } catch (err) {
       if (token !== loadToken) return;
+      loadedKey = "";
       updateRadarHud(hud, { sample, product, error: err.message || String(err) });
     }
   }
@@ -119,7 +183,9 @@ export function boot() {
     const file = $("track-file").files[0];
     writeParams({ flight, date: dateClean, hex });
     report.hidden = true;
+    stopPlayback();
     selected = null;
+    loadedKey = "";
     clearRadar();
     updateRadarHud(hud, {});
     setStatus(status, "", "");
@@ -157,7 +223,7 @@ export function boot() {
         return;
       }
       refreshView();
-      setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Click a peak or the time series to load that scan.`, "ok");
+      setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Play flight or click the time series to load scans.`, "ok");
     } catch (err) {
       hideProgress(progress);
       setStatus(status, err.message || String(err), "error");

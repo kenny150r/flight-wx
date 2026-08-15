@@ -75,7 +75,7 @@ export function renderTrack(summary, { onSelect, selected } = {}) {
   highlightSample(selected);
 }
 
-export function highlightSample(sample) {
+export function highlightSample(sample, { openPopup = true, follow = false } = {}) {
   if (!map) return;
   if (selectedMarker) {
     map.removeLayer(selectedMarker);
@@ -91,7 +91,9 @@ export function highlightSample(sample) {
   }).addTo(map);
   selectedMarker.bindPopup(
     `${sample.stationId || "n/a"} · ${Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "—"} · ${Number.isFinite(sample.dbz) ? `${sample.dbz.toFixed(1)} dBZ` : "—"}`,
-  ).openPopup();
+  );
+  if (openPopup) selectedMarker.openPopup();
+  if (follow) map.panTo([sample.lat, sample.lon], { animate: true, duration: 0.35 });
 }
 
 export function showRadarFrame(frame, sample) {
@@ -104,8 +106,8 @@ export function showRadarFrame(frame, sample) {
     radarLayer.addTo(map);
   }
   if (sample) {
-    map.setView([sample.lat, sample.lon], Math.max(map.getZoom(), 8));
-    highlightSample(sample);
+    map.setView([sample.lat, sample.lon], Math.max(map.getZoom(), 8), { animate: true });
+    highlightSample(sample, { openPopup: false });
   }
 }
 

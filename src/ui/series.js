@@ -57,7 +57,7 @@ function drawChart(el, { title, unit, samples, selected, getter, minY, maxY, col
       <text x="2" y="${pad.t + 4}" class="axis">${maxY}</text>
       <text x="2" y="${h - pad.b}" class="axis">${minY}</text>
       <polyline fill="none" stroke="${color}" stroke-width="1.6" points="${points}" />
-      ${cx != null ? `<line x1="${cx}" x2="${cx}" y1="${pad.t}" y2="${h - pad.b}" stroke="#f0b429" stroke-width="1" />` : ""}
+      <line data-cursor x1="${cx ?? pad.l}" x2="${cx ?? pad.l}" y1="${pad.t}" y2="${h - pad.b}" stroke="#f0b429" stroke-width="1" visibility="${cx != null ? "visible" : "hidden"}" />
     </svg>
   `;
   const svg = el.querySelector("svg");
@@ -100,5 +100,21 @@ export function renderSeries(root, samples, selected, onSelect) {
     maxY: 80,
     color: "#7aa2ff",
     onSelect,
+  });
+}
+
+export function updateSeriesCursor(root, samples, selected) {
+  const w = 360;
+  const pad = { l: 28, r: 8, t: 16, b: 14 };
+  const sorted = [...(samples || [])].sort((a, b) => a.timeMs - b.timeMs);
+  const cx = cursorX(sorted, selected, w, pad);
+  root.querySelectorAll("[data-cursor]").forEach((line) => {
+    if (cx == null) {
+      line.setAttribute("visibility", "hidden");
+      return;
+    }
+    line.setAttribute("visibility", "visible");
+    line.setAttribute("x1", String(cx));
+    line.setAttribute("x2", String(cx));
   });
 }

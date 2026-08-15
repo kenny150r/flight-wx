@@ -1,5 +1,5 @@
 import { MS_TO_KT } from "../analysis/shear.js";
-import { renderSeries } from "./series.js";
+import { renderSeries, updateSeriesCursor } from "./series.js";
 
 function fmt(n, digits = 1) {
   if (!Number.isFinite(n)) return "—";
@@ -85,7 +85,7 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (summary.strideSec && summary.strideSec > 60) notes.push(`Stride increased to ${summary.strideSec}s to stay under the volume budget.`);
   if (summary.lowConfidenceCount) notes.push(`${summary.lowConfidenceCount} low-confidence samples (beam miss or missing gate).`);
   if (meta?.notes?.length) notes.push(...meta.notes);
-  notes.push("Each point uses the tilt whose 4/3-earth beam height is closest to the aircraft. Click a peak, chart, or table row to load that scan on the map.");
+  notes.push("Each point uses the tilt whose 4/3-earth beam height is closest to the aircraft. Play flight to step through those scans, or click a peak, chart, or table row.");
   notes.push("Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only.");
   root.querySelector("[data-notes]").textContent = notes.join("\n");
 
@@ -107,6 +107,7 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   const rows = [...summary.samples].sort((a, b) => a.timeMs - b.timeMs).slice(0, 200);
   for (const s of rows) {
     const tr = document.createElement("tr");
+    tr.dataset.key = `${s.timeMs}|${s.stationId}|${s.lat}|${s.lon}`;
     tr.className = sameSample(selected, s) ? "is-selected" : "";
     tr.innerHTML = `
       <td>${fmtTime(s.timeMs)}</td>
@@ -138,5 +139,31 @@ export function updateRadarHud(el, { sample, product, loading, error } = {}) {
   el.querySelector("[data-hud-title]").textContent = title;
   el.querySelectorAll("[data-product]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.product === product);
+  });
+}
+
+export function highlightReportSelection(root, summary, selected) {
+  if (!root || !summary) return;
+  const shearPeak = (summary.maxAzShear?.value || 0) >= (summary.maxRadialShear?.value || 0)
+    ? summary.maxAzShear : summary.maxRadialShear;
+  const cardMap = {
+    dbz: summary.maxDbz?.sample,
+    vel: summary.maxVr?.sample,
+    shear: shearPeak?.sample,
+  };
+  for (const [key, sample] of Object.entries(cardMap)) {
+    root.querySelector(`[data-card=${key}]`)?.classList.toggle("is-selected", sameSample(selected, sample));
+  }
+  const key = selected ? `${selected.timeMs}|${selected.stationId}|${selected.lat}|${selected.lon}` : "";
+  root.querySelectorAll("[data-table] tr").forEach((tr) => {
+    tr.classList.toggle("is-selected", tr.dataset.key === key);
+  });
+  updateSeriesCursor(root, summary.samples, selected);
+}
+
+export function setPlayButtons(playing, enabled) {
+  document.querySelectorAll("[data-play-flight]").forEach((btn) => {
+    btn.disabled = !enabled;
+    btn.textContent = playing ? "Pause" : "Play flight";
   });
 }

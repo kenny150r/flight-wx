@@ -226,6 +226,20 @@ th { color: var(--muted); font-weight: 600; }
 
 tr { cursor: pointer; }
 
+.play-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.play-bar button { padding: 9px 12px; }
+
+.play-status {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .series {
   margin-top: 12px;
   background: var(--bg);
@@ -269,6 +283,7 @@ tr { cursor: pointer; }
 
 .hud-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
