@@ -37,7 +37,8 @@ An optional Mode-S hex helps historical [readsb globe-history](https://github.co
 - **Time series** — dBZ and signed radial velocity along the flight. Click a peak, chart, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind) at the closest-beam tilt.
 - **Play flight** — steps through the path in time, moving the aircraft and loading a new reflectivity overlay whenever the station, volume, or closest-beam tilt changes.
 - **Max |Vr|** — NEXRAD radial velocity (toward/away from the radar), not true wind. No dealiasing.
-- **Shear** — max of radial and azimuthal gate-to-gate shear in a ~2.5 km window, shown as kt/km and s⁻¹.
+- **Max horizontal shear** — strongest azimuthal (gate-to-gate) radial-velocity shear in a ~2.5 km window, in kt/km and s⁻¹. Click the card to zoom to that event and load velocity.
+- **Max vertical shear** — strongest dVr/dz at the aircraft from neighboring tilts (along-beam fallback if only one velocity tilt), in kt/km and kt/1000 ft. Click the card to zoom to that event and load velocity.
 
 Low-confidence flags mean the beam missed the aircraft by more than 1 km, or the gate was empty. Oceanic and non-US legs are outside CONUS NEXRAD range.
 

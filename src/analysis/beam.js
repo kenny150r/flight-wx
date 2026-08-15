@@ -1,4 +1,4 @@
-const RE_43_M = 8493 * 1000;
+export const RE_43_M = 8493 * 1000;
 export const FT_PER_M = 3.280839895;
 export const M_PER_FT = 0.3048;
 export const MS_TO_KT = 1.943844492;
@@ -7,6 +7,11 @@ export const BEAM_MISS_M = 1000;
 export function beamHeightM(rangeM, elevDeg, radarAltM = 0) {
   const el = (elevDeg * Math.PI) / 180;
   return radarAltM + rangeM * Math.sin(el) + (rangeM * rangeM) / (2 * RE_43_M);
+}
+
+export function beamHeightSlope(rangeM, elevDeg) {
+  const el = (elevDeg * Math.PI) / 180;
+  return Math.sin(el) + rangeM / RE_43_M;
 }
 
 export function altFtToM(altFt) {

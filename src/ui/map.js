@@ -59,7 +59,7 @@ export function renderTrack(summary, { onSelect, selected } = {}) {
   if (coords.length) {
     const line = L.polyline(coords, { color: "#8b9aab", weight: 2, opacity: 0.55 }).addTo(map);
     trackLayers.push(line);
-    if (!radarLayer) map.fitBounds(line.getBounds(), { padding: [32, 32] });
+    if (!radarLayer && !selected) map.fitBounds(line.getBounds(), { padding: [32, 32] });
   }
   for (const sample of samples) {
     const marker = L.circleMarker([sample.lat, sample.lon], {
@@ -73,6 +73,13 @@ export function renderTrack(summary, { onSelect, selected } = {}) {
     trackLayers.push(marker);
   }
   highlightSample(selected);
+}
+
+export const EVENT_ZOOM = 9;
+
+export function zoomToSample(sample, { zoom = EVENT_ZOOM } = {}) {
+  if (!map || !sample || !Number.isFinite(sample.lat) || !Number.isFinite(sample.lon)) return;
+  map.flyTo([sample.lat, sample.lon], zoom, { duration: 0.55 });
 }
 
 export function highlightSample(sample, { openPopup = true, follow = false } = {}) {
@@ -96,7 +103,7 @@ export function highlightSample(sample, { openPopup = true, follow = false } = {
   if (follow) map.panTo([sample.lat, sample.lon], { animate: true, duration: 0.35 });
 }
 
-export function showRadarFrame(frame, sample) {
+export function showRadarFrame(frame, sample, { zoom = true } = {}) {
   if (!map || !frame) return;
   const decoded = decodePolarData(frame);
   if (radarLayer) {
@@ -106,7 +113,7 @@ export function showRadarFrame(frame, sample) {
     radarLayer.addTo(map);
   }
   if (sample) {
-    map.setView([sample.lat, sample.lon], Math.max(map.getZoom(), 8), { animate: true });
+    if (zoom) zoomToSample(sample);
     highlightSample(sample, { openPopup: false });
   }
 }

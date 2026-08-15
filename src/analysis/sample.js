@@ -1,7 +1,7 @@
 import { bearingDeg, haversineKm } from "./geo.js";
 import { altFtToM, altMToFt, pickBestTilt } from "./beam.js";
 import { neighborhoodMaxAbs, samplePolar } from "./polar.js";
-import { computeShear } from "./shear.js";
+import { computeShear, computeVerticalShear, verticalFromRadial } from "./shear.js";
 
 export const NEIGHBOR_M = 5000;
 export { samplePolar, neighborhoodMaxAbs } from "./polar.js";
@@ -23,6 +23,10 @@ export function sampleExtractedVolume(extracted, points) {
     const nearbyDbz = neighborhoodMaxAbs(ref, azDeg, rangeM, NEIGHBOR_M, false);
     const nearbyVrMs = neighborhoodMaxAbs(vel, azDeg, rangeM, NEIGHBOR_M, true);
     const shear = computeShear(vel, azDeg, rangeM);
+    const vert = computeVerticalShear(sweeps, azDeg, rangeM, radarAltM, aircraftAltM);
+    const vertShearS = Number.isFinite(vert.verticalS)
+      ? vert.verticalS
+      : verticalFromRadial(shear.radialS, rangeM, sweep?.elevation);
     const missing = !Number.isFinite(dbz) && !Number.isFinite(vrMs);
     samples.push({
       timeMs: point.timeMs,
@@ -41,6 +45,8 @@ export function sampleExtractedVolume(extracted, points) {
       nearbyVrMs: Number.isFinite(nearbyVrMs) ? nearbyVrMs : NaN,
       radialShearS: shear.radialS,
       azShearS: shear.azimuthalS,
+      horizShearS: shear.azimuthalS,
+      vertShearS,
       lowConfidence: tilt.lowConfidence || missing,
       reason: missing ? "missing_gate" : (tilt.lowConfidence ? "beam_miss" : null),
     });

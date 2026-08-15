@@ -5,7 +5,7 @@ import { loadRadarForSample } from "./analysis/loadRadar.js";
 import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, sleep } from "./analysis/playback.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
-import { clearRadar, highlightSample, initMap, renderTrack, showRadarFrame } from "./ui/map.js";
+import { clearRadar, highlightSample, initMap, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
 import {
   hideProgress,
   highlightReportSelection,
@@ -111,8 +111,8 @@ export function boot() {
   }
 
   function refreshView() {
-    renderReport(report, summary, meta, { onSelect: (sample) => selectSample(sample), selected });
-    renderTrack(summary, { onSelect: (sample) => selectSample(sample), selected });
+    renderReport(report, summary, meta, { onSelect: (sample, opts) => selectSample(sample, opts), selected });
+    renderTrack(summary, { onSelect: (sample, opts) => selectSample(sample, opts), selected });
     setPlayButtons(playing, canPlay());
   }
 
@@ -139,13 +139,20 @@ export function boot() {
     setPlayStatus("Steps through each station’s closest-beam reflectivity");
   }
 
-  async function selectSample(sample, { reload = false, quiet = false } = {}) {
+  async function selectSample(sample, { reload = false, quiet = false, product: nextProduct, zoom } = {}) {
     if (!sample) return;
     if (!quiet) stopPlayback();
+    if (nextProduct && nextProduct !== product) {
+      product = nextProduct;
+      reload = true;
+      loadedKey = "";
+    }
+    const shouldZoom = zoom ?? !quiet;
     const frameKey = playbackFrameKey(sample, product);
     const sameFrame = !reload && loadedKey && loadedKey === frameKey;
     selected = sample;
-    highlightSample(sample, { openPopup: !quiet, follow: quiet });
+    if (shouldZoom) zoomToSample(sample);
+    highlightSample(sample, { openPopup: !quiet, follow: quiet && !shouldZoom });
     if (quiet && summary) highlightReportSelection(report, summary, selected);
     else if (summary) refreshView();
     if (quiet) {
@@ -167,7 +174,7 @@ export function boot() {
       });
       if (token !== loadToken) return;
       loadedKey = frameKey;
-      showRadarFrame(frame, sample);
+      showRadarFrame(frame, sample, { zoom: quiet });
       updateRadarHud(hud, { sample, product });
     } catch (err) {
       if (token !== loadToken) return;

@@ -160,6 +160,10 @@ button.example {
   cursor: pointer;
 }
 
+.card:hover {
+  border-color: var(--accent);
+}
+
 .card.is-selected,
 tr.is-selected {
   outline: 1px solid var(--warn);

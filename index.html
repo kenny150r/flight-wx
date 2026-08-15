@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>flight-wx — flight vs NEXRAD report</title>
-  <meta name="description" content="In-browser report of maximum reflectivity, radar radial velocity, and shear along a flight track.">
+  <meta name="description" content="In-browser report of maximum reflectivity, radar radial velocity, and horizontal and vertical shear along a flight track.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
       </svg>
       <h1>flight-wx</h1>
     </div>
-    <p class="tagline">Flight number + date → max dBZ, radar radial velocity, and shear along the path. Runs entirely in the browser.</p>
+    <p class="tagline">Flight number + date → max dBZ, radar radial velocity, and horizontal and vertical shear along the path. Runs entirely in the browser.</p>
 
     <form id="analyze-form">
       <div class="row">
@@ -64,8 +64,14 @@
           <div class="metric-sub"></div>
           <div class="metric-meta"></div>
         </article>
-        <article class="card" data-card="shear">
-          <h3>Max radar shear</h3>
+        <article class="card" data-card="hshear">
+          <h3>Max horizontal shear</h3>
+          <div><span class="metric-value">—</span><span class="metric-unit">kt/km</span></div>
+          <div class="metric-sub"></div>
+          <div class="metric-meta"></div>
+        </article>
+        <article class="card" data-card="vshear">
+          <h3>Max vertical shear</h3>
           <div><span class="metric-value">—</span><span class="metric-unit">kt/km</span></div>
           <div class="metric-sub"></div>
           <div class="metric-meta"></div>
@@ -82,7 +88,7 @@
         <table>
           <thead>
             <tr>
-              <th>UTC</th><th>Radar</th><th>dBZ</th><th>|Vr| kt</th><th>Rad s⁻¹</th><th>Az s⁻¹</th><th></th>
+              <th>UTC</th><th>Radar</th><th>dBZ</th><th>|Vr| kt</th><th>H s⁻¹</th><th>V s⁻¹</th><th></th>
             </tr>
           </thead>
           <tbody data-table></tbody>

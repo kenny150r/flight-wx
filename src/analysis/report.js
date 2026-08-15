@@ -1,4 +1,4 @@
-import { MS_TO_KT, shearToKtPerKm } from "./shear.js";
+import { MS_TO_KT, shearToKtPer1000Ft, shearToKtPerKm } from "./shear.js";
 
 function peakBy(samples, getter) {
   let best = null;
@@ -21,7 +21,8 @@ export function summarizeSamples(samples, { trackCount, volumeCount, bytes } = {
   const maxVr = peakBy(samples, (s) => Math.abs(s.vrMs));
   const maxNearbyVr = peakBy(samples, (s) => Math.abs(s.nearbyVrMs));
   const maxRadial = peakBy(samples, (s) => s.radialShearS);
-  const maxAz = peakBy(samples, (s) => s.azShearS);
+  const maxAz = peakBy(samples, (s) => s.horizShearS ?? s.azShearS);
+  const maxVert = peakBy(samples, (s) => s.vertShearS);
   const sites = [...new Set(samples.map((s) => s.stationId).filter(Boolean))];
   const lowConf = samples.filter((s) => s.lowConfidence).length;
 
@@ -54,6 +55,17 @@ export function summarizeSamples(samples, { trackCount, volumeCount, bytes } = {
       ...maxAz,
       perSec: maxAz.value,
       ktPerKm: shearToKtPerKm(maxAz.value),
+    },
+    maxHorizShear: maxAz && {
+      ...maxAz,
+      perSec: maxAz.value,
+      ktPerKm: shearToKtPerKm(maxAz.value),
+    },
+    maxVertShear: maxVert && {
+      ...maxVert,
+      perSec: maxVert.value,
+      ktPerKm: shearToKtPerKm(maxVert.value),
+      ktPer1000Ft: shearToKtPer1000Ft(maxVert.value),
     },
   };
 }

@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 import { neighborhoodMaxAbs, samplePolar } from "../analysis/polar.js";
 import { sampleExtractedVolume } from "../analysis/sample.js";
 
-function grid({ value = 30, spike } = {}) {
+function grid({ value = 30, spike, numGates = 8 } = {}) {
   const numAz = 4;
-  const numGates = 8;
   const values = new Float32Array(numAz * numGates);
   values.fill(value);
   if (spike) values[spike.az * numGates + spike.gate] = spike.value;
@@ -54,5 +53,27 @@ describe("sampleExtractedVolume", () => {
     expect(samples[0].dbz).toBeCloseTo(28, 5);
     expect(samples[0].vrMs).toBeCloseTo(12, 5);
     expect(samples[0].stationId).toBe("KTLX");
+    expect(samples[0].horizShearS).toBe(samples[0].azShearS);
+  });
+
+  it("uses neighboring tilts for vertical shear", () => {
+    const extracted = {
+      lat: 35,
+      lon: -97,
+      altM: 300,
+      stationId: "KTLX",
+      sweeps: [
+        { elevation: 1.5, reflectivity: grid({ value: 20, numGates: 80 }), velocity: grid({ value: 5, numGates: 80 }) },
+        { elevation: 3.1, reflectivity: grid({ value: 20, numGates: 80 }), velocity: grid({ value: 15, numGates: 80 }) },
+      ],
+    };
+    const samples = sampleExtractedVolume(extracted, [{
+      timeMs: Date.UTC(2013, 4, 20, 19, 51, 0),
+      lat: 35,
+      lon: -96.5,
+      altFt: 8000,
+      station: { id: "KTLX" },
+    }]);
+    expect(samples[0].vertShearS).toBeGreaterThan(0);
   });
 });

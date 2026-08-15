@@ -58,8 +58,8 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   const nearbyDbz = summary.maxNearbyDbz?.value;
   const vrKt = summary.maxVr?.kt;
   const nearbyVr = summary.maxNearbyVr?.kt;
-  const rad = summary.maxRadialShear;
-  const az = summary.maxAzShear;
+  const horiz = summary.maxHorizShear || summary.maxAzShear;
+  const vert = summary.maxVertShear;
 
   root.querySelector("[data-card=dbz] .metric-value").textContent = fmt(maxDbz, 1);
   root.querySelector("[data-card=dbz] .metric-sub").textContent = `Nearby max ${fmt(nearbyDbz, 1)} dBZ`;
@@ -69,12 +69,15 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   root.querySelector("[data-card=vel] .metric-sub").textContent = `Nearby max ${fmt(nearbyVr, 0)} kt radial`;
   root.querySelector("[data-card=vel] .metric-meta").textContent = peakMeta(summary.maxVr);
 
-  const shearPeak = (az?.value || 0) >= (rad?.value || 0) ? az : rad;
-  const shearLabel = shearPeak === az ? "azimuthal" : "radial";
-  root.querySelector("[data-card=shear] .metric-value").textContent = fmt(shearPeak?.ktPerKm, 1);
-  root.querySelector("[data-card=shear] .metric-sub").textContent =
-    `${shearLabel} · ${fmt(shearPeak?.perSec, 4)} s⁻¹ · radial ${fmt(rad?.ktPerKm, 1)} kt/km`;
-  root.querySelector("[data-card=shear] .metric-meta").textContent = peakMeta(shearPeak);
+  root.querySelector("[data-card=hshear] .metric-value").textContent = fmt(horiz?.ktPerKm, 1);
+  root.querySelector("[data-card=hshear] .metric-sub").textContent =
+    `Azimuthal · ${fmt(horiz?.perSec, 4)} s⁻¹`;
+  root.querySelector("[data-card=hshear] .metric-meta").textContent = peakMeta(horiz);
+
+  root.querySelector("[data-card=vshear] .metric-value").textContent = fmt(vert?.ktPerKm, 1);
+  root.querySelector("[data-card=vshear] .metric-sub").textContent =
+    `${fmt(vert?.perSec, 4)} s⁻¹ · ${fmt(vert?.ktPer1000Ft, 1)} kt / 1000 ft`;
+  root.querySelector("[data-card=vshear] .metric-meta").textContent = peakMeta(vert);
 
   const notes = [];
   if (meta?.route?.origin) notes.push(`Typical route ${meta.route.origin}→${meta.route.destination || "?"}`);
@@ -85,19 +88,21 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (summary.strideSec && summary.strideSec > 60) notes.push(`Stride increased to ${summary.strideSec}s to stay under the volume budget.`);
   if (summary.lowConfidenceCount) notes.push(`${summary.lowConfidenceCount} low-confidence samples (beam miss or missing gate).`);
   if (meta?.notes?.length) notes.push(...meta.notes);
-  notes.push("Each point uses the tilt whose 4/3-earth beam height is closest to the aircraft. Play flight to step through those scans, or click a peak, chart, or table row.");
-  notes.push("Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only.");
+  notes.push("Each point uses the tilt whose 4/3-earth beam height is closest to the aircraft. Play flight to step through those scans, or click a peak card to zoom to that event.");
+  notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only.");
   root.querySelector("[data-notes]").textContent = notes.join("\n");
 
   const cardMap = {
-    dbz: summary.maxDbz?.sample,
-    vel: summary.maxVr?.sample,
-    shear: shearPeak?.sample,
+    dbz: { sample: summary.maxDbz?.sample, product: "reflectivity" },
+    vel: { sample: summary.maxVr?.sample, product: "velocity" },
+    hshear: { sample: horiz?.sample, product: "velocity" },
+    vshear: { sample: vert?.sample, product: "velocity" },
   };
-  for (const [key, sample] of Object.entries(cardMap)) {
+  for (const [key, { sample, product }] of Object.entries(cardMap)) {
     const card = root.querySelector(`[data-card=${key}]`);
+    if (!card) continue;
     card.classList.toggle("is-selected", sameSample(selected, sample));
-    card.onclick = sample ? () => onSelect?.(sample) : null;
+    card.onclick = sample ? () => onSelect?.(sample, { product, zoom: true }) : null;
   }
 
   renderSeries(root, summary.samples, selected, onSelect);
@@ -114,8 +119,8 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
       <td>${s.stationId || "—"}</td>
       <td>${fmt(s.dbz, 1)}</td>
       <td>${fmt(Number.isFinite(s.vrMs) ? Math.abs(s.vrMs) * MS_TO_KT : NaN, 0)}</td>
-      <td>${fmt(s.radialShearS, 4)}</td>
-      <td>${fmt(s.azShearS, 4)}</td>
+      <td>${fmt(s.horizShearS ?? s.azShearS, 4)}</td>
+      <td>${fmt(s.vertShearS, 4)}</td>
       <td>${s.lowConfidence ? s.reason || "low" : ""}</td>`;
     tr.addEventListener("click", () => onSelect?.(s));
     tbody.appendChild(tr);
@@ -144,12 +149,11 @@ export function updateRadarHud(el, { sample, product, loading, error } = {}) {
 
 export function highlightReportSelection(root, summary, selected) {
   if (!root || !summary) return;
-  const shearPeak = (summary.maxAzShear?.value || 0) >= (summary.maxRadialShear?.value || 0)
-    ? summary.maxAzShear : summary.maxRadialShear;
   const cardMap = {
     dbz: summary.maxDbz?.sample,
     vel: summary.maxVr?.sample,
-    shear: shearPeak?.sample,
+    hshear: (summary.maxHorizShear || summary.maxAzShear)?.sample,
+    vshear: summary.maxVertShear?.sample,
   };
   for (const [key, sample] of Object.entries(cardMap)) {
     root.querySelector(`[data-card=${key}]`)?.classList.toggle("is-selected", sameSample(selected, sample));
