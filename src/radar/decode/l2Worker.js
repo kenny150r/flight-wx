@@ -25,7 +25,7 @@ self.onmessage = async (event) => {
     postProgress(id, "Starting decoder…");
     const { maybeGunzip } = await import("./binary.js");
 
-    const cacheKey = options?.s3Key || `${options?.dateClean || ""}_${options?.timeClean || ""}`;
+    const cacheKey = options?.s3Key || `${options?.station?.id || ""}_${options?.dateClean || ""}_${options?.timeClean || ""}`;
     let radar = cacheKey && volumeCache.key === cacheKey ? volumeCache.radar : null;
     const t0 = performance.now();
     if (!radar) {

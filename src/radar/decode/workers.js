@@ -132,8 +132,7 @@ async function runInPool(pool, bytes, options, onProgress) {
     pool.release(worker, { key });
     return payload;
   } catch (error) {
-    const timedOut = /timed out/i.test(error?.message || "");
-    pool.release(worker, { key, failed: timedOut });
+    pool.release(worker, { key, failed: true });
     throw error;
   }
 }

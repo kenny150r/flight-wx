@@ -35,21 +35,13 @@ export function verticalFromRadial(radialS, rangeM, elevDeg) {
   return radialS / slope;
 }
 
-export function computeVerticalShear(sweeps, azDeg, rangeM, radarAltM = 0, aircraftAltM = NaN) {
-  const layers = [];
-  for (const sweep of sweeps || []) {
-    if (!sweep?.velocity || !Number.isFinite(sweep.elevation)) continue;
-    const z = beamHeightM(rangeM, sweep.elevation, radarAltM);
-    const vr = samplePolar(sweep.velocity, azDeg, rangeM);
-    if (Number.isFinite(z) && Number.isFinite(vr)) layers.push({ z, vr, elevation: sweep.elevation });
-  }
-  layers.sort((a, b) => a.z - b.z);
-
+export function verticalShearFromLayers(layers, aircraftAltM = NaN) {
+  const sorted = [...(layers || [])].sort((a, b) => a.z - b.z);
   let bestS = NaN;
   let bestScore = Infinity;
-  for (let i = 0; i < layers.length - 1; i++) {
-    const a = layers[i];
-    const b = layers[i + 1];
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const a = sorted[i];
+    const b = sorted[i + 1];
     const dz = b.z - a.z;
     if (dz < MIN_VERT_DZ_M) continue;
     const verticalS = Math.abs(b.vr - a.vr) / dz;
@@ -62,6 +54,17 @@ export function computeVerticalShear(sweeps, azDeg, rangeM, radarAltM = 0, aircr
     }
   }
   return { verticalS: bestS };
+}
+
+export function computeVerticalShear(sweeps, azDeg, rangeM, radarAltM = 0, aircraftAltM = NaN) {
+  const layers = [];
+  for (const sweep of sweeps || []) {
+    if (!sweep?.velocity || !Number.isFinite(sweep.elevation)) continue;
+    const z = beamHeightM(rangeM, sweep.elevation, radarAltM);
+    const vr = samplePolar(sweep.velocity, azDeg, rangeM);
+    if (Number.isFinite(z) && Number.isFinite(vr)) layers.push({ z, vr, elevation: sweep.elevation });
+  }
+  return verticalShearFromLayers(layers, aircraftAltM);
 }
 
 export function shearToKtPerKm(perSecond) {

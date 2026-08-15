@@ -3,7 +3,7 @@ import { findClosestByTimeMs } from "../radar/decode/sweeps.js";
 import { defaultConcurrency, mapPool } from "./pool.js";
 
 export const MAX_VOLUMES = 80;
-export const SCAN_TOLERANCE_SEC = 360;
+export const SCAN_TOLERANCE_SEC = 600;
 export const DEFAULT_STRIDE_SEC = 60;
 
 function datesAround(dateClean) {
@@ -47,7 +47,7 @@ async function listStationDays(listKeys, listScans) {
       scanCache.set(item.key, listed);
     } catch {
       listErrors += 1;
-      scanCache.set(item.key, { scans: [] });
+      scanCache.set(item.key, { scans: [], listFailed: true });
     }
   });
   return { scanCache, listErrors };
@@ -55,12 +55,39 @@ async function listStationDays(listKeys, listScans) {
 
 function matchPoint(point, scanCache) {
   const dateClean = utcDateClean(point.timeMs);
+  let listFailed = false;
   for (const date of datesAround(dateClean)) {
     const listed = scanCache.get(`${point.station.id}:${date}`) || { scans: [] };
+    if (listed.listFailed) listFailed = true;
     const match = findClosestByTimeMs(listed.scans || [], date, point.timeMs, SCAN_TOLERANCE_SEC);
-    if (match) return { match, usedDate: date };
+    if (match) return { match, usedDate: date, listFailed: false };
   }
-  return { match: null, usedDate: dateClean };
+  return { match: null, usedDate: dateClean, listFailed };
+}
+
+function capVolumes(volumes, maxVolumes) {
+  if (volumes.length <= maxVolumes) return { volumes, capped: false };
+  const sorted = [...volumes].sort((a, b) => {
+    const ta = a.points[0]?.timeMs || 0;
+    const tb = b.points[0]?.timeMs || 0;
+    return ta - tb || a.key.localeCompare(b.key);
+  });
+  const keep = [];
+  const used = new Set();
+  const step = sorted.length / maxVolumes;
+  for (let i = 0; i < maxVolumes; i++) {
+    let idx = Math.min(sorted.length - 1, Math.floor(i * step));
+    while (used.has(idx) && idx < sorted.length - 1) idx += 1;
+    if (used.has(idx)) continue;
+    used.add(idx);
+    keep.push(sorted[idx]);
+  }
+  const kept = new Set(keep);
+  for (const volume of sorted) {
+    if (kept.has(volume)) continue;
+    for (const point of volume.points) point.uncoveredReason = "volume_budget";
+  }
+  return { volumes: keep, capped: true };
 }
 
 export async function planVolumes(assigned, { listScans, maxVolumes = MAX_VOLUMES } = {}) {
@@ -85,9 +112,9 @@ export async function planVolumes(assigned, { listScans, maxVolumes = MAX_VOLUME
 
   const volumeMap = new Map();
   for (const point of covered) {
-    const { match, usedDate } = matchPoint(point, scanCache);
+    const { match, usedDate, listFailed } = matchPoint(point, scanCache);
     if (!match) {
-      point.uncoveredReason = "no_scan";
+      point.uncoveredReason = listFailed ? "list_failed" : "no_scan";
       continue;
     }
     if (!volumeMap.has(match.key)) {
@@ -103,11 +130,13 @@ export async function planVolumes(assigned, { listScans, maxVolumes = MAX_VOLUME
     volumeMap.get(match.key).points.push(point);
   }
 
-  const volumes = [...volumeMap.values()];
+  const planned = [...volumeMap.values()];
+  const { volumes, capped } = capVolumes(planned, maxVolumes);
   return {
     volumes,
-    overBudget: volumes.length > maxVolumes,
-    uniqueCount: volumes.length,
+    overBudget: planned.length > maxVolumes,
+    uniqueCount: planned.length,
     listErrors,
+    capped,
   };
 }

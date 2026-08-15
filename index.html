@@ -30,7 +30,10 @@
         <input id="date" name="date" type="date">
       </label>
       <button type="submit">Analyze</button>
-      <button type="button" id="example-flight" class="example">Example 4985</button>
+      <details class="example-lib">
+        <summary>Examples</summary>
+        <div id="example-library" class="example-panel"></div>
+      </details>
       <details class="more">
         <summary>More</summary>
         <label>Mode-S hex
@@ -41,8 +44,8 @@
         </label>
       </details>
     </form>
-    <div id="status" class="status" hidden></div>
-    <div id="progress" class="progress" hidden>
+    <div id="status" class="status" hidden role="status" aria-live="polite"></div>
+    <div id="progress" class="progress" hidden role="status" aria-live="polite">
       <div id="progress-text">Working…</div>
       <div class="progress-bar"><span id="progress-bar"></span></div>
       <div id="progress-detail" class="progress-detail"></div>
@@ -115,6 +118,7 @@
     </div>
     <div id="charts" class="charts">
       <div class="series" data-series="dbz"></div>
+      <div class="series" data-series="mean"></div>
       <div class="series" data-series="composite"></div>
       <div class="series" data-series="vel"></div>
     </div>
@@ -124,7 +128,7 @@
         <table>
           <thead>
             <tr>
-              <th>UTC</th><th>Radar</th><th>dBZ</th><th>Comp</th><th>|Vr| kt</th><th>H s⁻¹</th><th>V s⁻¹</th><th></th>
+              <th>UTC</th><th>Radar</th><th>dBZ</th><th>Mean</th><th>Comp</th><th>|Vr| kt</th><th>H s⁻¹</th><th>V s⁻¹</th><th></th>
             </tr>
           </thead>
           <tbody data-table></tbody>

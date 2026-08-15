@@ -90,7 +90,7 @@ export function drawRangeRings(lat, lon, maxRangeKm = 230, stationId = "") {
     L.marker([lat, lon], {
       icon: L.divIcon({
         className: "radar-site-label",
-        html: `<span>${stationId}</span>`,
+        html: `<span>${String(stationId).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>`,
         iconSize: [56, 14],
         iconAnchor: [28, -8],
       }),

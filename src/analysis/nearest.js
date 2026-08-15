@@ -1,6 +1,6 @@
 import { haversineKm } from "./geo.js";
 
-export const MAX_RADAR_KM = 230;
+export const MAX_RADAR_KM = 300;
 
 export function findNearestStation(lat, lon, stations, maxKm = MAX_RADAR_KM) {
   let best = null;

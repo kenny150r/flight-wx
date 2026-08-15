@@ -52,9 +52,11 @@ describe("ingestVolumes", () => {
       },
       sample: async (_raw, item) => ({ samples: [{ stationId: item.station.id }] }),
     });
-    expect(chunks.flat()).toEqual([
+    const flat = chunks.flat();
+    expect(flat).toEqual(expect.arrayContaining([
       expect.objectContaining({ stationId: "KDIX", s3Key: "key-KDIX" }),
-    ]);
+      expect.objectContaining({ stationId: "KOKX", reason: "ingest_failed", s3Key: null }),
+    ]));
   });
 
   it("limits queued downloads while sampling is busy", async () => {

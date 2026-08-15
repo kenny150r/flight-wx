@@ -30,6 +30,7 @@ describe("playback", () => {
   it("resumes after the selected sample and wraps to the start", () => {
     const playable = playableSamples(samples);
     expect(playIndexOf(playable, playable[0])).toBe(0);
+    expect(playIndexOf(playable, { timeMs: 999, stationId: "X", s3Key: "z" })).toBe(-1);
     expect(nextPlayIndex(playable, playable[0])).toBe(1);
     expect(nextPlayIndex(playable, playable[1])).toBe(0);
   });

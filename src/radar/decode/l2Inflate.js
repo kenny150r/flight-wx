@@ -1,7 +1,7 @@
 import Bzip2 from "../vendor/wasm-bz2.js";
 import { assembleL2Volume, findL2BzipBlocks } from "./l2Blocks.js";
 
-const MAX_WORKERS = 8;
+const MAX_WORKERS = 3;
 
 function poolSize(blockCount) {
   const cores = (typeof navigator !== "undefined" && navigator.hardwareConcurrency) || 4;

@@ -22,16 +22,15 @@ export function samePlaySample(a, b) {
 }
 
 export function playIndexOf(samples, selected) {
-  if (!samples.length || !selected) return 0;
-  const idx = samples.findIndex((s) => samePlaySample(s, selected));
-  return idx < 0 ? 0 : idx;
+  if (!samples.length || !selected) return -1;
+  return samples.findIndex((s) => samePlaySample(s, selected));
 }
 
 export function nextPlayIndex(samples, selected) {
   if (!samples.length) return 0;
   if (!selected) return 0;
   const idx = playIndexOf(samples, selected);
-  if (!samePlaySample(samples[idx], selected)) return 0;
+  if (idx < 0) return 0;
   return idx + 1 < samples.length ? idx + 1 : 0;
 }
 

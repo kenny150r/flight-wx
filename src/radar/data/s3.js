@@ -2,8 +2,8 @@ const L2_BUCKET = "unidata-nexrad-level2";
 const L3_BUCKET = "unidata-nexrad-level3";
 const S3_HOST = (bucket) => `https://${bucket}.s3.amazonaws.com`;
 
-async function fetchDirect(directUrl) {
-  return fetch(directUrl);
+async function fetchDirect(directUrl, signal) {
+  return fetch(directUrl, signal ? { signal } : undefined);
 }
 
 function xmlTag(xmlText, tag) {
@@ -41,7 +41,7 @@ export async function listS3Prefix(bucket, prefix, { signal } = {}) {
     if (token) params.set("continuation-token", token);
     const query = params.toString();
     const directUrl = `${S3_HOST(bucket)}/?${query}`;
-    const resp = await fetchDirect(directUrl);
+    const resp = await fetchDirect(directUrl, signal);
     if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
     if (!resp.ok) {
       throw new Error(`S3 list failed (${resp.status}) for ${prefix}`);
@@ -56,7 +56,7 @@ export async function listS3Prefix(bucket, prefix, { signal } = {}) {
 
 export async function getS3Object(bucket, key, { signal, onProgress } = {}) {
   const directUrl = `${S3_HOST(bucket)}/${key.split("/").map(encodeURIComponent).join("/")}`;
-  const resp = await fetchDirect(directUrl);
+  const resp = await fetchDirect(directUrl, signal);
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   if (!resp.ok) {
     throw new Error(`S3 get failed (${resp.status}) for ${key}`);
@@ -69,6 +69,7 @@ export async function getS3Object(bucket, key, { signal, onProgress } = {}) {
   const chunks = [];
   let loaded = 0;
   while (true) {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
     const { done, value } = await reader.read();
     if (done) break;
     chunks.push(value);

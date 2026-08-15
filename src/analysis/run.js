@@ -92,7 +92,7 @@ export async function ingestVolumes(volumes, {
       const item = queue.shift();
       wakeSpace();
       if (item.error) {
-        out[item.idx] = [];
+        out[item.idx] = failedPlaceholders(item.volume, item.error);
       } else {
         onProgress?.({
           phase: "decode",
@@ -115,7 +115,7 @@ export async function ingestVolumes(volumes, {
           }));
         } catch (error) {
           if (!firstError) firstError = error;
-          out[item.idx] = [];
+          out[item.idx] = failedPlaceholders(item.volume, error);
         }
       }
       sampled += 1;
@@ -142,6 +142,29 @@ export async function ingestVolumes(volumes, {
   wakeSpace();
   await Promise.all(samplers);
   return { chunks: out.filter(Boolean), bytes, firstError };
+}
+
+function failedPlaceholders(volume, error) {
+  const reason = error?.message || "ingest_failed";
+  return (volume.points || []).map((point) => ({
+    timeMs: point.timeMs,
+    lat: point.lat,
+    lon: point.lon,
+    altFt: point.altFt || 0,
+    stationId: volume.station?.id || point.station?.id || null,
+    s3Key: null,
+    dateClean: volume.dateClean,
+    timeClean: volume.timeClean,
+    dbz: NaN,
+    compositeDbz: NaN,
+    vrMs: NaN,
+    horizShearS: NaN,
+    azShearS: NaN,
+    vertShearS: NaN,
+    lowConfidence: true,
+    reason: "ingest_failed",
+    ingestError: reason,
+  }));
 }
 
 export async function analyzeTrack(points, { signal, onProgress } = {}) {
@@ -171,6 +194,7 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
     summary.strideSec = stride;
     summary.assigned = assigned;
     summary.uncoveredCount = assigned.length - covered;
+    summary.listErrors = plan.listErrors || 0;
     summary.emptyReason = covered === 0
       ? "outside_conus"
       : (plan.listErrors ? "list_failed" : "no_scans");
@@ -187,7 +211,11 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
   summary.strideSec = stride;
   summary.assigned = assigned;
   summary.uncoveredCount = assigned.length - covered;
-  if (!samples.length) {
+  summary.listErrors = plan.listErrors || 0;
+  summary.volumeCapped = Boolean(plan.capped);
+  summary.ingestFailedCount = samples.filter((s) => s.reason === "ingest_failed").length;
+  const usable = samples.filter((s) => s.s3Key);
+  if (!usable.length) {
     summary.emptyReason = "ingest_failed";
     summary.emptyDetail = firstError?.message || "";
   }

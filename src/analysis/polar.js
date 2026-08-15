@@ -47,12 +47,10 @@ export function samplePolar(sweep, azDeg, rangeM) {
   return Number.isFinite(a0) ? a0 : a1;
 }
 
-export function neighborhoodMaxAbs(sweep, azDeg, rangeM, radiusM, signed = false) {
-  if (!sweep?.values || !sweep.azimuths?.length) return NaN;
+function forEachNeighborhoodGate(sweep, azDeg, rangeM, radiusM, visit) {
+  if (!sweep?.values || !sweep.azimuths?.length) return;
   const { azimuths, values, numGates, rangeStart, rangeStep } = sweep;
   const dAzDeg = Math.max(0.5, (radiusM / Math.max(rangeM, 1000)) * (180 / Math.PI));
-  let best = NaN;
-  let bestAbs = -Infinity;
   for (let i = 0; i < azimuths.length; i++) {
     let dAz = Math.abs(wrapDeg(azimuths[i] - azDeg));
     if (dAz > 180) dAz = 360 - dAz;
@@ -64,12 +62,40 @@ export function neighborhoodMaxAbs(sweep, azDeg, rangeM, radiusM, signed = false
       if (Math.hypot(dR, azM) > radiusM) continue;
       const v = values[i * numGates + g];
       if (!Number.isFinite(v)) continue;
+      visit(v);
+    }
+  }
+}
+
+export function neighborhoodMaxAbs(sweep, azDeg, rangeM, radiusM, signed = false) {
+  let best = NaN;
+  let bestAbs = -Infinity;
+  forEachNeighborhoodGate(sweep, azDeg, rangeM, radiusM, (v) => {
+    if (signed) {
       const mag = Math.abs(v);
       if (mag > bestAbs) {
         bestAbs = mag;
-        best = signed ? v : mag;
+        best = v;
       }
+    } else if (!Number.isFinite(best) || v > best) {
+      best = v;
     }
-  }
+  });
   return best;
+}
+
+export function neighborhoodMean(sweep, azDeg, rangeM, radiusM) {
+  return neighborhoodMaxAndMean(sweep, azDeg, rangeM, radiusM).mean;
+}
+
+export function neighborhoodMaxAndMean(sweep, azDeg, rangeM, radiusM) {
+  let max = NaN;
+  let sum = 0;
+  let n = 0;
+  forEachNeighborhoodGate(sweep, azDeg, rangeM, radiusM, (v) => {
+    if (!Number.isFinite(max) || v > max) max = v;
+    sum += v;
+    n += 1;
+  });
+  return { max, mean: n ? sum / n : NaN };
 }

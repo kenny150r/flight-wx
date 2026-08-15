@@ -49,12 +49,14 @@ describe("flightState", () => {
   it("formats radar conditions for the play overlay", () => {
     const text = formatRadarWx({
       dbz: 28.1,
+      meanDbz: 22.4,
       compositeDbz: 41.2,
       vrMs: -6.17,
       horizShearS: 0.002,
       vertShearS: 0.004,
     });
     expect(text).toContain("28.1 dBZ");
+    expect(text).toContain("22.4 mean");
     expect(text).toContain("41.2 comp");
     expect(text).toContain("kt Vr");
     expect(text).toContain("H 0.002");

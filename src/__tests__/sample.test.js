@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { neighborhoodMaxAbs, samplePolar } from "../analysis/polar.js";
+import { neighborhoodMaxAbs, neighborhoodMean, samplePolar } from "../analysis/polar.js";
 import { sampleExtractedVolume } from "../analysis/sample.js";
 
 function grid({ value = 30, spike, numGates = 8 } = {}) {
@@ -29,6 +29,20 @@ describe("polar sample", () => {
     const sweep = grid({ value: 10, spike: { az: 0, gate: 2, value: 55 } });
     expect(neighborhoodMaxAbs(sweep, 0, 2000, 1500, false)).toBeCloseTo(55, 5);
   });
+
+  it("uses max dBZ, not max absolute value", () => {
+    const sweep = grid({ value: 8, spike: { az: 0, gate: 2, value: -20 } });
+    expect(neighborhoodMaxAbs(sweep, 0, 2000, 1500, false)).toBeCloseTo(8, 5);
+  });
+
+  it("averages finite gates in the neighborhood", () => {
+    const sweep = grid({ value: 10, spike: { az: 0, gate: 2, value: 55 } });
+    expect(neighborhoodMean(sweep, 0, 2000, 1500)).toBeCloseTo(25, 5);
+  });
+
+  it("returns NaN when no finite gates are nearby", () => {
+    expect(Number.isNaN(neighborhoodMean(grid({ value: NaN }), 0, 2000, 1500))).toBe(true);
+  });
 });
 
 describe("sampleExtractedVolume", () => {
@@ -51,6 +65,7 @@ describe("sampleExtractedVolume", () => {
     }]);
     expect(samples).toHaveLength(1);
     expect(samples[0].dbz).toBeCloseTo(28, 5);
+    expect(samples[0].meanDbz).toBeCloseTo(28, 5);
     expect(samples[0].vrMs).toBeCloseTo(12, 5);
     expect(samples[0].stationId).toBe("KTLX");
     expect(samples[0].horizShearS).toBe(samples[0].azShearS);
@@ -77,6 +92,7 @@ describe("sampleExtractedVolume", () => {
       station: { id: "KTLX" },
     }]);
     expect(samples[0].dbz).toBeCloseTo(22, 5);
+    expect(samples[0].meanDbz).toBeCloseTo(22, 5);
     expect(samples[0].compositeDbz).toBeCloseTo(48, 5);
     expect(samples[0].compositeElevation).toBe(6.4);
   });

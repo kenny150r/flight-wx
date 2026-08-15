@@ -1,4 +1,7 @@
 import Level2Radar from "nexrad-level-2-data";
+import { altFtToM } from "../../analysis/beam.js";
+import { bearingDeg, haversineKm } from "../../analysis/geo.js";
+import { sampleFromTiltHits, tiltHitFromSweep } from "../../analysis/sample.js";
 import { quantizePolarIndices } from "./quantize.js";
 
 function countFinite(values) {
@@ -308,4 +311,66 @@ export function extractPhysicalSweeps(radar, station, products = ["reflectivity"
     });
   }
   return { lat, lon, altM, sweeps };
+}
+
+export function samplePhysicalVolume(radar, station, points, products = ["reflectivity", "velocity"]) {
+  const { lat, lon } = siteCoords(radar, station);
+  const elevNums = radar.listElevations();
+  let altM = 300;
+  const acc = (points || []).map((point) => {
+    const rangeKm = haversineKm(lat, lon, point.lat, point.lon);
+    return {
+      point,
+      rangeKm,
+      azDeg: bearingDeg(lat, lon, point.lat, point.lon),
+      aircraftAltM: altFtToM(point.altFt || 0),
+      hits: [],
+    };
+  });
+  for (const num of elevNums) {
+    const extracted = {};
+    let elevation = NaN;
+    for (const product of products) {
+      try {
+        const moment = extractSweepMoment(radar, num, product);
+        extracted[product] = {
+          azimuths: moment.azimuths,
+          values: moment.values,
+          numGates: moment.numGates,
+          rangeStart: moment.rangeStart,
+          rangeStep: moment.rangeStep,
+          elevation: moment.elevation,
+          timestampMs: moment.timestampMs,
+        };
+        elevation = moment.elevation;
+      } catch {
+        // product missing on this tilt
+      }
+    }
+    if (!extracted.reflectivity && !extracted.velocity) continue;
+    try {
+      radar.setElevation(num);
+      altM = radarAltMFromHeader(radar.getHeader(0));
+    } catch {
+      // keep previous alt
+    }
+    const sweep = {
+      elevation,
+      reflectivity: extracted.reflectivity || null,
+      velocity: extracted.velocity || null,
+    };
+    for (const item of acc) {
+      item.hits.push(tiltHitFromSweep(sweep, item.azDeg, item.rangeKm * 1000, item.aircraftAltM, altM));
+    }
+  }
+  return {
+    lat,
+    lon,
+    altM,
+    samples: acc.map((item) => sampleFromTiltHits(item.point, item.hits, {
+      stationId: station?.id || null,
+      rangeKm: item.rangeKm,
+      azDeg: item.azDeg,
+    })),
+  };
 }

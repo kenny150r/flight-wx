@@ -25,8 +25,18 @@ async function withStores(mode, names, fn) {
   const db = await openDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(names, mode);
-    Promise.resolve(fn(tx)).then(resolve, reject);
-    tx.onerror = () => reject(tx.error);
+    let result;
+    tx.oncomplete = () => {
+      try { db.close(); } catch { /* already closed */ }
+      resolve(result);
+    };
+    tx.onerror = () => {
+      try { db.close(); } catch { /* already closed */ }
+      reject(tx.error);
+    };
+    Promise.resolve(fn(tx)).then((value) => {
+      result = value;
+    }, reject);
   });
 }
 

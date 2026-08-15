@@ -1,11 +1,12 @@
-import { EXAMPLE_FLIGHT } from "./adsb/ident.js";
+import { EXAMPLE_LIBRARY } from "./adsb/ident.js";
+import { EXAMPLE_GROUPS } from "./adsb/examples.js";
 import { lookupFlightTrack } from "./adsb/lookup.js";
-import { parseTrackFile } from "./adsb/parseTrack.js";
+import { MAX_TRACK_BYTES, parseTrackFile } from "./adsb/parseTrack.js";
 import { clearFrameCache, getCachedFrame, loadCachedRadar, prefetchPlayFrames } from "./analysis/frameCache.js";
 import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, playIndexOf, sleep } from "./analysis/playback.js";
 import { defaultConcurrency } from "./analysis/pool.js";
 import { analyzeTrack } from "./analysis/run.js";
-import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
+import { cleanToDateInput, dateInputToClean, isCleanDate } from "./analysis/geo.js";
 import { formatTrackTime } from "./analysis/time.js";
 import { buildShareSearch, clampShareFrame, parseShareSearch } from "./analysis/shareUrl.js";
 import { clearRadar, EVENT_ZOOM, highlightSample, initMap, invalidateMapSize, mapZoom, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
@@ -53,6 +54,9 @@ export function boot() {
   let product = "reflectivity";
   let tiltMode = "closest";
   let loadToken = 0;
+  let runToken = 0;
+  let runAbort = null;
+  let prefetchAbort = null;
   let loadedKey = "";
   let playing = false;
   let cacheText = "";
@@ -69,13 +73,44 @@ export function boot() {
     await run();
   });
 
-  $("example-flight").addEventListener("click", async () => {
-    $("flight").value = EXAMPLE_FLIGHT.flight;
-    $("date").value = EXAMPLE_FLIGHT.dateInput;
-    $("hex").value = "";
-    $("track-file").value = "";
-    await run();
-  });
+  const exampleRoot = $("example-library");
+  const exampleLib = exampleRoot?.closest("details");
+  if (exampleRoot) {
+    const hint = document.createElement("p");
+    hint.className = "example-hint";
+    hint.textContent = "Representative paths timed to the NTSB encounter. Public historical ADS-B is usually missing.";
+    exampleRoot.append(hint);
+    for (const group of EXAMPLE_GROUPS) {
+      const items = EXAMPLE_LIBRARY.filter((ex) => ex.group === group.id);
+      if (!items.length) continue;
+      const heading = document.createElement("div");
+      heading.className = "example-group";
+      heading.textContent = group.label;
+      exampleRoot.append(heading);
+      for (const example of items) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "example-item";
+        btn.dataset.example = example.id;
+        btn.dataset.fit = example.fit || "";
+        const sub = document.createElement("small");
+        sub.textContent = [example.detail, example.ntsb].filter(Boolean).join(" · ");
+        btn.append(example.label, sub);
+        btn.addEventListener("click", async () => {
+          if (exampleLib) exampleLib.open = false;
+          $("flight").value = example.flight;
+          $("date").value = example.dateInput;
+          $("hex").value = "";
+          $("track-file").value = "";
+          await run();
+        });
+        exampleRoot.append(btn);
+      }
+    }
+    document.addEventListener("click", (event) => {
+      if (exampleLib?.open && !exampleLib.contains(event.target)) exampleLib.open = false;
+    });
+  }
 
   document.querySelectorAll("[data-play-flight]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -120,7 +155,13 @@ export function boot() {
     syncShareUrl({ frame: 0, play: false });
   });
 
-  if (params.flight && params.date) run({ restore: { frame: params.frame, play: params.play } });
+  ["flight", "date", "hex"].forEach((id) => {
+    $(id).addEventListener("input", () => {
+      if ($("track-file").files[0]) $("track-file").value = "";
+    });
+  });
+
+  if (params.flight && isCleanDate(params.date)) run({ restore: { frame: params.frame, play: params.play } });
 
   function canPlay() {
     return playableSamples(summary?.samples || []).length > 0;
@@ -149,7 +190,7 @@ export function boot() {
 
   function syncSlider(index) {
     const samples = playableSamples(summary?.samples || []);
-    const i = Number.isFinite(index) ? index : playIndexOf(samples, selected);
+    const i = Number.isFinite(index) ? index : Math.max(0, playIndexOf(samples, selected));
     setPlaySlider({
       enabled: canPlay(),
       index: i,
@@ -233,7 +274,9 @@ export function boot() {
       await selectSample(samples[i], { quiet: true, keepPlaying: true });
       if (!playing) break;
       await sleep(PLAY_STEP_MS);
-      i = playIndexOf(playableSamples(summary.samples), selected) + 1;
+      const idx = playIndexOf(playableSamples(summary.samples), selected);
+      if (idx < 0) break;
+      i = idx + 1;
     }
     playing = false;
     setPlayButtons(false, canPlay());
@@ -304,19 +347,25 @@ export function boot() {
 
   function prefetchAhead(fromSample) {
     const samples = playableSamples(summary?.samples || []);
-    const i = playIndexOf(samples, fromSample);
+    const i = Math.max(0, playIndexOf(samples, fromSample));
     prefetchPlayFrames(samples.slice(i, i + 16), product, {
       concurrency: defaultConcurrency("decode"),
       tiltMode,
+      signal: prefetchAbort?.signal,
     }).catch(() => {});
   }
 
   function startPrefetch() {
+    prefetchAbort?.abort();
+    prefetchAbort = new AbortController();
     const samples = playableSamples(summary?.samples || []);
+    const signal = prefetchAbort.signal;
     prefetchPlayFrames(samples, product, {
       concurrency: defaultConcurrency("decode"),
       tiltMode,
+      signal,
       onProgress: ({ done, total }) => {
+        if (signal.aborted) return;
         cacheText = done < total ? `Cached ${done}/${total} scans` : "Scans cached";
         syncSlider();
       },
@@ -324,6 +373,11 @@ export function boot() {
   }
 
   async function run({ restore } = {}) {
+    runAbort?.abort();
+    prefetchAbort?.abort();
+    const token = ++runToken;
+    const ac = new AbortController();
+    runAbort = ac;
     const flight = $("flight").value.trim();
     const dateClean = dateInputToClean($("date").value);
     const hex = $("hex").value.trim();
@@ -338,9 +392,12 @@ export function boot() {
     });
     setResultsVisible(false);
     stopPlayback();
+    summary = null;
+    meta = null;
     selected = null;
     loadedKey = "";
     cacheText = "";
+    setPlayButtons(false, false);
     clearFrameCache();
     clearRadar();
     updateRadarHud(hud, {});
@@ -351,13 +408,16 @@ export function boot() {
       let points = [];
       meta = { notes: [] };
       if (file) {
+        if (file.size > MAX_TRACK_BYTES) throw new Error("Track file is too large (8 MB max).");
         const text = await file.text();
+        if (token !== runToken) return;
         points = parseTrackFile(file.name, text);
         meta = { source: "upload", notes: [`Loaded ${points.length} points from ${file.name}`] };
       } else {
         if (!flight || !dateClean) throw new Error("Enter a flight number and date, or upload a track.");
         setProgress(progress, { text: `Fetching public track for ${flight}…` });
-        const found = await lookupFlightTrack({ flight, dateClean, hex });
+        const found = await lookupFlightTrack({ flight, dateClean, hex, signal: ac.signal });
+        if (token !== runToken) return;
         points = found.points;
         meta = found;
         if (!points.length) {
@@ -370,11 +430,16 @@ export function boot() {
         }
       }
 
-      summary = await analyzeTrack(points, {
-        onProgress: (p) => setProgress(progress, p),
+      const next = await analyzeTrack(points, {
+        signal: ac.signal,
+        onProgress: (p) => {
+          if (token === runToken) setProgress(progress, p);
+        },
       });
+      if (token !== runToken) return;
+      summary = next;
       hideProgress(progress);
-      if (!summary.samples.length) {
+      if (summary.emptyReason || !summary.samples.some((s) => s.s3Key)) {
         const emptyText = {
           outside_conus: "Track is outside CONUS NEXRAD coverage.",
           list_failed: "Could not list NEXRAD scans. Check your connection and try Analyze again.",
@@ -389,9 +454,14 @@ export function boot() {
       refreshView();
       setResultsVisible(true);
       startPrefetch();
-      setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Play flight or drag the slider to scrub.`, "ok");
+      const extra = [];
+      if (summary.ingestFailedCount) extra.push(`${summary.ingestFailedCount} volumes failed to decode.`);
+      if (summary.listErrors) extra.push(`${summary.listErrors} radar listings failed.`);
+      if (summary.volumeCapped) extra.push("Volume count was capped after the stride limit.");
+      setStatus(status, `Analyzed ${summary.samples.filter((s) => s.s3Key).length} samples across ${summary.sites.length} radars. Play flight or drag the slider to scrub.${extra.length ? ` ${extra.join(" ")}` : ""}`, extra.length ? "warn" : "ok");
       await restoreShare(restore);
     } catch (err) {
+      if (token !== runToken || err?.name === "AbortError") return;
       hideProgress(progress);
       setStatus(status, err.message || String(err), "error");
     }

@@ -1,21 +1,9 @@
 import { IATA_TO_ICAO } from "./airlines.js";
+import { extraCallsignsFromLibrary, findExample } from "./examples.js";
 
-/** Known marketed vs operating callsigns. Endeavor 4985 is sold as Delta 4985. */
-const EXTRA_CALLSIGNS = {
-  EDV4985: ["9E4985", "DL4985", "DAL4985"],
-  "9E4985": ["EDV4985", "DL4985", "DAL4985"],
-  DL4985: ["EDV4985", "9E4985"],
-  DAL4985: ["EDV4985", "9E4985"],
-};
+export { EXAMPLE_FLIGHT, EXAMPLE_LIBRARY, findExample } from "./examples.js";
 
-export const EXAMPLE_FLIGHT = {
-  flight: "EDV4985",
-  dateClean: "20250717",
-  dateInput: "2025-07-17",
-  label: "Endeavor 4985 · 17 Jul 2025",
-  detail: "JFK–CVG (Delta Connection)",
-  trackUrl: "examples/edv4985-20250717.csv",
-};
+const EXTRA_CALLSIGNS = extraCallsignsFromLibrary();
 
 export function normalizeIdent(raw) {
   const s = String(raw || "").toUpperCase().replace(/[\s-]/g, "");
@@ -36,8 +24,18 @@ export function identCandidates(raw) {
 }
 
 export function isExampleFlight(flight, dateClean) {
-  const ids = new Set(identCandidates(flight));
-  return dateClean === EXAMPLE_FLIGHT.dateClean && (ids.has("EDV4985") || ids.has("9E4985"));
+  for (const id of identCandidates(flight)) {
+    if (findExample(id, dateClean)) return true;
+  }
+  return Boolean(findExample(flight, dateClean));
+}
+
+export function findExampleForIdent(flight, dateClean) {
+  for (const id of identCandidates(flight)) {
+    const found = findExample(id, dateClean);
+    if (found) return found;
+  }
+  return findExample(flight, dateClean);
 }
 
 export function normalizeHex(raw) {

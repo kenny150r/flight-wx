@@ -54,7 +54,7 @@ function drawChart(el, { title, unit, samples, selected, getter, minY, maxY, col
   const cx = cursorX(sorted, selected, w, pad);
   el.innerHTML = `
     <div class="series-head">${title} <span>${unit}</span></div>
-    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="${title}">
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" tabindex="0" aria-label="${title}">
       <text x="2" y="${pad.t + 4}" class="axis">${maxY}</text>
       <text x="2" y="${h - pad.b}" class="axis">${minY}</text>
       <polyline fill="none" stroke="${color}" stroke-width="1.6" points="${points}" />
@@ -68,10 +68,20 @@ function drawChart(el, { title, unit, samples, selected, getter, minY, maxY, col
     const sample = nearestSampleByX(sorted, x - pad.l, w - pad.l - pad.r);
     if (sample) onSelect?.(sample);
   });
+  svg.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const idx = selected ? sorted.findIndex((s) => s.timeMs === selected.timeMs && s.stationId === selected.stationId) : -1;
+    const next = event.key === "ArrowRight"
+      ? sorted[Math.min(sorted.length - 1, Math.max(0, idx) + (idx < 0 ? 0 : 1))]
+      : sorted[Math.max(0, (idx < 0 ? 0 : idx) - 1)];
+    if (next) onSelect?.(next);
+  });
 }
 
 export function renderSeries(root, samples, selected, onSelect) {
   const dbzEl = root.querySelector("[data-series=dbz]");
+  const meanEl = root.querySelector("[data-series=mean]");
   const compEl = root.querySelector("[data-series=composite]");
   const velEl = root.querySelector("[data-series=vel]");
   if (!dbzEl || !velEl) return;
@@ -79,6 +89,7 @@ export function renderSeries(root, samples, selected, onSelect) {
   if (list.length < 2) {
     dbzEl.innerHTML = "";
     velEl.innerHTML = "";
+    if (meanEl) meanEl.innerHTML = "";
     if (compEl) compEl.innerHTML = "";
     return;
   }
@@ -93,6 +104,19 @@ export function renderSeries(root, samples, selected, onSelect) {
     color: "#3ee0b2",
     onSelect,
   });
+  if (meanEl) {
+    drawChart(meanEl, {
+      title: "5 km mean reflectivity",
+      unit: "dBZ",
+      samples: list,
+      selected,
+      getter: (s) => s.meanDbz,
+      minY: 0,
+      maxY: 75,
+      color: "#5ec8e8",
+      onSelect,
+    });
+  }
   if (compEl) {
     drawChart(compEl, {
       title: "Composite reflectivity",

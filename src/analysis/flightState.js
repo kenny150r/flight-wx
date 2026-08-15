@@ -56,6 +56,7 @@ export function formatRadarWx(sample) {
   if (!sample) return "";
   return [
     Number.isFinite(sample.dbz) ? `${sample.dbz.toFixed(1)} dBZ` : "",
+    Number.isFinite(sample.meanDbz) ? `${sample.meanDbz.toFixed(1)} mean` : "",
     Number.isFinite(sample.compositeDbz) ? `${sample.compositeDbz.toFixed(1)} comp` : "",
     Number.isFinite(sample.vrMs) ? `${(sample.vrMs * MS_TO_KT).toFixed(0)} kt Vr` : "",
     Number.isFinite(sample.horizShearS ?? sample.azShearS)
@@ -93,18 +94,26 @@ export function formatFlightState(sample, { coords = false } = {}) {
   return lines.filter(Boolean).join("\n");
 }
 
+export function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export function flightStatePopupHtml(sample) {
-  const when = formatTrackTime(sample?.timeMs, { lon: sample?.lon }).label;
+  const when = escapeHtml(formatTrackTime(sample?.timeMs, { lon: sample?.lon }).label);
   const radar = [
     sample?.stationId,
     Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° beam` : "",
     Number.isFinite(sample?.dbz) ? `${sample.dbz.toFixed(1)} dBZ` : "",
     Number.isFinite(sample?.vrMs) ? `${(sample.vrMs * MS_TO_KT).toFixed(0)} kt Vr` : "",
   ].filter(Boolean).join(" · ");
-  const state = formatFlightState(sample, { coords: true }).replace(/\n/g, "<br>");
+  const state = escapeHtml(formatFlightState(sample, { coords: true })).replace(/\n/g, "<br>");
   return `<div class="wx-popup">
     <div class="wx-popup-time">${when}</div>
     <div class="wx-popup-state">${state}</div>
-    ${radar ? `<div class="wx-popup-radar">${radar}</div>` : ""}
+    ${radar ? `<div class="wx-popup-radar">${escapeHtml(radar)}</div>` : ""}
   </div>`;
 }

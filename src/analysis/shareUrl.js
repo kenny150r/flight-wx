@@ -1,9 +1,12 @@
+import { isCleanDate } from "./geo.js";
+
 export function parseShareSearch(search = "") {
   const q = new URLSearchParams(String(search || "").replace(/^\?/, ""));
   const frame = Number.parseInt(q.get("frame") || "", 10);
+  const rawDate = (q.get("date") || "").replace(/-/g, "");
   return {
     flight: q.get("flight") || "",
-    date: q.get("date") || "",
+    date: isCleanDate(rawDate) ? rawDate : "",
     hex: q.get("hex") || "",
     frame: Number.isFinite(frame) && frame >= 1 ? frame : 0,
     play: q.get("play") === "1",

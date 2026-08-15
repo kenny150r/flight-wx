@@ -17,7 +17,7 @@ self.onmessage = async (event) => {
   try {
     postProgress(id, "Starting decoder…");
     const { maybeGunzip } = await import("./binary.js");
-    const cacheKey = options?.s3Key || `${options?.dateClean || ""}_${options?.timeClean || ""}`;
+    const cacheKey = options?.s3Key || `${options?.station?.id || ""}_${options?.dateClean || ""}_${options?.timeClean || ""}`;
     let radar = cacheKey && volumeCache.key === cacheKey ? volumeCache.radar : null;
     if (!radar) {
       postProgress(id, "Unpacking volume…");
@@ -40,13 +40,9 @@ self.onmessage = async (event) => {
       volumeCache.key = cacheKey;
       volumeCache.radar = radar;
     }
-    postProgress(id, "Extracting reflectivity and velocity…");
-    const { extractPhysicalSweeps } = await import("./l2.js");
-    const extracted = extractPhysicalSweeps(radar, options.station);
-    extracted.stationId = options.station?.id || null;
     postProgress(id, "Sampling flight path…");
-    const { sampleExtractedVolume } = await import("../../analysis/sample.js");
-    const samples = sampleExtractedVolume(extracted, options.points || []);
+    const { samplePhysicalVolume } = await import("./l2.js");
+    const { samples } = samplePhysicalVolume(radar, options.station, options.points || []);
     self.postMessage({ id, ok: true, payload: { samples } });
   } catch (err) {
     self.postMessage({ id, ok: false, error: err.message || String(err) });

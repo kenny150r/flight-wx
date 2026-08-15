@@ -16,9 +16,10 @@ function peakBy(samples, getter) {
 }
 
 export function summarizeSamples(samples, { trackCount, volumeCount, bytes } = {}) {
-  const covered = samples.filter((s) => s.stationId);
+  const covered = samples.filter((s) => s.stationId && s.reason !== "ingest_failed");
   const maxDbz = peakBy(samples, (s) => s.dbz);
   const maxNearbyDbz = peakBy(samples, (s) => s.nearbyDbz);
+  const maxMeanDbz = peakBy(samples, (s) => s.meanDbz);
   const maxComposite = peakBy(samples, (s) => s.compositeDbz);
   const maxNearbyComposite = peakBy(samples, (s) => s.nearbyCompositeDbz);
   const maxVr = peakBy(samples, (s) => Math.abs(s.vrMs));
@@ -40,6 +41,7 @@ export function summarizeSamples(samples, { trackCount, volumeCount, bytes } = {
     lowConfidenceCount: lowConf,
     maxDbz,
     maxNearbyDbz,
+    maxMeanDbz,
     maxCompositeDbz: maxComposite && {
       ...maxComposite,
       sample: compositeView(maxComposite.sample),

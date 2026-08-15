@@ -1,0 +1,405 @@
+/** Representative CONUS tracks aligned to NTSB encounter time/place. */
+
+export const AIRPORTS = {
+  KAUS: { lat: 30.1945, lon: -97.6699, elevFt: 542 },
+  KBNA: { lat: 36.1245, lon: -86.6782, elevFt: 599 },
+  KATL: { lat: 33.6407, lon: -84.4277, elevFt: 1026 },
+  KASE: { lat: 39.2232, lon: -106.8689, elevFt: 7838 },
+  KCMD: { lat: 34.2687, lon: -86.8584, elevFt: 803 },
+  KCVG: { lat: 39.0488, lon: -84.6678, elevFt: 896 },
+  KFLL: { lat: 26.0726, lon: -80.1527, elevFt: 9 },
+  KIAH: { lat: 29.9844, lon: -95.3414, elevFt: 97 },
+  KJFK: { lat: 40.6398, lon: -73.7789, elevFt: 13 },
+  KLIT: { lat: 34.7294, lon: -92.2243, elevFt: 262 },
+  KLOU: { lat: 38.2280, lon: -85.6637, elevFt: 546 },
+  KMIA: { lat: 25.7959, lon: -80.2870, elevFt: 8 },
+  KMSP: { lat: 44.8820, lon: -93.2218, elevFt: 841 },
+  KRDU: { lat: 35.8776, lon: -78.7875, elevFt: 435 },
+  KREG: { lat: 30.1717, lon: -90.9403, elevFt: 32 },
+  KSLC: { lat: 40.7884, lon: -111.9778, elevFt: 4227 },
+  KSNA: { lat: 33.6757, lon: -117.8682, elevFt: 56 },
+  KSUN: { lat: 43.5044, lon: -114.2962, elevFt: 5318 },
+  KTPA: { lat: 27.9755, lon: -82.5332, elevFt: 26 },
+};
+
+export const EXAMPLE_GROUPS = [
+  { id: "airline", label: "Airline encounters" },
+  { id: "llws", label: "Airport LLWS / microburst" },
+  { id: "ga", label: "GA convective" },
+];
+
+export const EXAMPLE_LIBRARY = [
+  {
+    id: "edv4985",
+    flight: "EDV4985",
+    aliases: ["9E4985", "DL4985", "DAL4985"],
+    dateClean: "20250717",
+    dateInput: "2025-07-17",
+    dateAliases: [],
+    label: "Endeavor 4985 · 17 Jul 2025",
+    detail: "JFK–CVG · convective turbulence at ~FL174",
+    group: "airline",
+    ntsb: "DCA25LA272",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/200627/pdf",
+    origin: "KJFK",
+    destination: "KCVG",
+    airline: "Endeavor Air",
+    fit: "strong",
+    trackUrl: "examples/edv4985-20250717.csv",
+    notes: [
+      "Using the bundled Endeavor 4985 / 17 Jul 2025 JFK–CVG example track (public historical ADS-B was not available).",
+      "Path is representative. Times are UTC, aligned to the NTSB encounter at 10:53 EDT (14:53Z) near 18,000 ft on descent (DCA25LA272 / N330PQ).",
+    ],
+  },
+  {
+    id: "swa2231",
+    flight: "SWA2231",
+    aliases: ["WN2231"],
+    dateClean: "20250502",
+    dateInput: "2025-05-02",
+    dateAliases: [],
+    label: "Southwest 2231 · 2 May 2025",
+    detail: "AUS–BNA · hail / 58–65 dBZ at FL280",
+    group: "airline",
+    ntsb: "DCA25LA197",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/200101/pdf",
+    origin: "KAUS",
+    destination: "KBNA",
+    airline: "Southwest Airlines",
+    fit: "best",
+    waypoints: [
+      { icao: "KAUS", altFt: 542, time: "2025-05-02T15:33:00Z" },
+      { lat: 32.85, lon: -95.55, altFt: 36000, time: "2025-05-02T16:08:00Z" },
+      { lat: 35.779, lon: -87.467, altFt: 28000, time: "2025-05-02T17:00:00Z" },
+      { icao: "KBNA", altFt: 599, time: "2025-05-02T17:12:00Z" },
+    ],
+    notes: [
+      "Representative AUS–BNA path. Times are UTC, aligned to the NTSB hail encounter at 12:00 CDT (17:00Z) near Centerville, TN (DCA25LA197 / N247WN).",
+      "NTSB KOHX analysis showed extreme echoes up to 65 dBZ below the track and 58.5 dBZ at flight level.",
+    ],
+  },
+  {
+    id: "aal1286",
+    flight: "AAL1286",
+    aliases: ["AA1286"],
+    dateClean: "20250623",
+    dateInput: "2025-06-23",
+    dateAliases: ["20250622"],
+    label: "American 1286 · 22 Jun 2025",
+    detail: "MIA–RDU · growing cell at FL250, EDR 0.665",
+    group: "airline",
+    ntsb: "DCA25LA240",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/200362/pdf",
+    origin: "KMIA",
+    destination: "KRDU",
+    airline: "American Airlines",
+    fit: "best",
+    waypoints: [
+      { icao: "KMIA", altFt: 8, time: "2025-06-23T01:13:00Z" },
+      { lat: 27.48, lon: -80.05, altFt: 25000, time: "2025-06-23T01:30:00Z" },
+      { lat: 31.20, lon: -79.55, altFt: 36000, time: "2025-06-23T02:05:00Z" },
+      { icao: "KRDU", altFt: 435, time: "2025-06-23T03:05:00Z" },
+    ],
+    notes: [
+      "Representative MIA–RDU climb. Times are UTC, aligned to the NTSB encounter about 17 minutes after departure at FL250 (DCA25LA240 / N189UW).",
+      "Local event time was about 21:30 EDT on 22 Jun; use 23 Jun UTC. NTSB compared airborne radar (tilt +3.5°) with WSR-88D ~45 dBZ under the track.",
+    ],
+  },
+  {
+    id: "ual2857",
+    flight: "UAL2857",
+    aliases: ["UA2857"],
+    dateClean: "20250616",
+    dateInput: "2025-06-16",
+    dateAliases: ["20250615"],
+    label: "United 2857 · 15 Jun 2025",
+    detail: "IAH–FLL · pop-up cell at FL250 near Fort Myers",
+    group: "airline",
+    ntsb: "DCA25LA238",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/200351/pdf",
+    origin: "KIAH",
+    destination: "KFLL",
+    airline: "United Airlines",
+    fit: "strong",
+    waypoints: [
+      { icao: "KIAH", altFt: 97, time: "2025-06-15T22:40:00Z" },
+      { lat: 28.10, lon: -88.40, altFt: 36000, time: "2025-06-15T23:25:00Z" },
+      { lat: 26.5375, lon: -81.7629, altFt: 25000, time: "2025-06-16T01:17:00Z" },
+      { icao: "KFLL", altFt: 9, time: "2025-06-16T01:40:00Z" },
+    ],
+    notes: [
+      "Representative IAH–FLL path. Times are UTC, aligned to the NTSB encounter at 21:17 EDT (01:17Z 16 Jun) near Fort Myers (DCA25LA238 / N28478).",
+      "Crew saw green/yellow returns appear ahead at FL250 before they could deviate.",
+    ],
+  },
+  {
+    id: "skw5971",
+    flight: "SKW5971",
+    aliases: ["OO5971", "UA5971", "UAL5971"],
+    dateClean: "20250829",
+    dateInput: "2025-08-29",
+    dateAliases: ["20250828"],
+    label: "SkyWest 5971 · 28 Aug 2025",
+    detail: "ASE–IAH, diverted AUS · upset at FL390",
+    group: "airline",
+    ntsb: "DCA25LA307",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateFinalReport/200899/pdf",
+    origin: "KASE",
+    destination: "KAUS",
+    airline: "SkyWest Airlines",
+    fit: "strong",
+    waypoints: [
+      { icao: "KASE", altFt: 7838, time: "2025-08-28T23:02:00Z" },
+      { lat: 36.40, lon: -102.20, altFt: 39000, time: "2025-08-28T23:45:00Z" },
+      { lat: 32.870, lon: -97.870, altFt: 39000, time: "2025-08-29T00:27:00Z" },
+      { lat: 32.40, lon: -97.40, altFt: 34650, time: "2025-08-29T00:28:00Z" },
+      { icao: "KAUS", altFt: 542, time: "2025-08-29T01:20:00Z" },
+    ],
+    notes: [
+      "Representative ASE–IAH path, diverted toward AUS after the upset. Times are UTC, aligned to 19:27 CDT (00:27Z 29 Aug) near Peaster, TX (DCA25LA307 / N110SY).",
+      "Crew reported being clear of clouds. Velocity/shear near KFWS is the interesting product; reflectivity may be weak.",
+    ],
+  },
+  {
+    id: "dal56",
+    flight: "DAL56",
+    aliases: ["DL56"],
+    dateClean: "20250730",
+    dateInput: "2025-07-30",
+    dateAliases: [],
+    label: "Delta 56 · 30 Jul 2025",
+    detail: "SLC–AMS, diverted MSP · 2.5 min upset at FL370",
+    group: "airline",
+    ntsb: "DCA25LA276",
+    reportUrl: "https://aviation-safety.net/wikibase/531309",
+    origin: "KSLC",
+    destination: "KMSP",
+    airline: "Delta Air Lines",
+    fit: "fair",
+    waypoints: [
+      { icao: "KSLC", altFt: 4227, time: "2025-07-30T22:15:00Z" },
+      { lat: 41.40, lon: -109.40, altFt: 37000, time: "2025-07-30T22:55:00Z" },
+      { lat: 41.90138, lon: -107.87072, altFt: 37000, time: "2025-07-30T23:23:00Z" },
+      { lat: 42.15, lon: -106.40, altFt: 35500, time: "2025-07-30T23:50:00Z" },
+    ],
+    notes: [
+      "Representative SLC departure through Creston, WY. Times are UTC, aligned to 17:23 MDT (23:23Z) (DCA25LA276 / N422DZ). Investigation was still preliminary as of the last public report.",
+      "Wyoming NEXRAD is sparse. Track stops shortly after the upset rather than continuing the MSP diversion.",
+    ],
+  },
+  {
+    id: "dal1044",
+    flight: "DAL1044",
+    aliases: ["DL1044"],
+    dateClean: "20240426",
+    dateInput: "2024-04-26",
+    dateAliases: [],
+    label: "Delta 1044 · 26 Apr 2024",
+    detail: "SNA–ATL · convective turbulence on descent",
+    group: "airline",
+    ntsb: "DCA24LA174",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/194158/pdf",
+    origin: "KSNA",
+    destination: "KATL",
+    airline: "Delta Air Lines",
+    fit: "fair",
+    waypoints: [
+      { icao: "KSNA", altFt: 56, time: "2024-04-26T13:20:00Z" },
+      { lat: 33.55, lon: -106.00, altFt: 37000, time: "2024-04-26T14:20:00Z" },
+      { lat: 33.173, lon: -84.915, altFt: 18000, time: "2024-04-26T17:30:00Z" },
+      { icao: "KATL", altFt: 1026, time: "2024-04-26T17:50:00Z" },
+    ],
+    notes: [
+      "Representative SNA–ATL path. Times are UTC, aligned to 13:30 EDT (17:30Z) near Hogansville, GA (DCA24LA174 / N6703D).",
+      "NTSB cited nearby EDR 0.2–0.3 (light to moderate) and cumulus along the descent.",
+    ],
+  },
+  {
+    id: "dal1253",
+    flight: "DAL1253",
+    aliases: ["DL1253"],
+    dateClean: "20240328",
+    dateInput: "2024-03-28",
+    dateAliases: ["20240327"],
+    label: "Delta 1253 · 27 Mar 2024",
+    detail: "ATL–TPA · cloud-top turbulence at FL310",
+    group: "airline",
+    ntsb: "DCA24LA135",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/194001/pdf",
+    origin: "KATL",
+    destination: "KTPA",
+    airline: "Delta Air Lines",
+    fit: "fair",
+    waypoints: [
+      { icao: "KATL", altFt: 1026, time: "2024-03-28T02:40:00Z" },
+      { lat: 32.20, lon: -83.60, altFt: 33000, time: "2024-03-28T03:10:00Z" },
+      { lat: 31.041, lon: -83.072, altFt: 31000, time: "2024-03-28T03:34:00Z" },
+      { icao: "KTPA", altFt: 26, time: "2024-03-28T04:20:00Z" },
+    ],
+    notes: [
+      "Representative ATL–TPA path. Times are UTC, aligned to 03:34Z near Lakeland, GA (DCA24LA135 / N6705Y).",
+      "Night cloud-top encounter; airborne radar showed little moisture. Local date was 27 Mar.",
+    ],
+  },
+  {
+    id: "cpt7727",
+    flight: "CPT7727",
+    aliases: ["N877FE", "PT7727"],
+    dateClean: "20220714",
+    dateInput: "2022-07-14",
+    dateAliases: ["20220713"],
+    label: "Corporate Air 7727 · 13 Jul 2022",
+    detail: "SUN–SLC · microburst on go-around (~30 ft)",
+    group: "llws",
+    ntsb: "WPR22LA251",
+    reportUrl: "https://www.ntsb.gov/investigations/AccidentReports/Reports/AIR2505.pdf",
+    origin: "KSUN",
+    destination: "KSLC",
+    airline: "Corporate Air",
+    fit: "weak",
+    waypoints: [
+      { icao: "KSUN", altFt: 5318, time: "2022-07-13T23:20:00Z" },
+      { lat: 41.55, lon: -112.40, altFt: 16000, time: "2022-07-14T00:10:00Z" },
+      { lat: 40.95, lon: -112.05, altFt: 8000, time: "2022-07-14T00:40:00Z" },
+      { icao: "KSLC", altFt: 4260, time: "2022-07-14T00:52:00Z" },
+    ],
+    notes: [
+      "Representative SUN–SLC arrival aligned to 18:52 MDT (00:52Z 14 Jul) (WPR22LA251 / AIR-25-05 / N877FE).",
+      "The airplane was about 30 ft AGL. NEXRAD will not sample the aircraft; KMTX may still show the outflow.",
+    ],
+  },
+  {
+    id: "n55pc",
+    flight: "N55PC",
+    aliases: [],
+    dateClean: "20230222",
+    dateInput: "2023-02-22",
+    dateAliases: [],
+    label: "N55PC · 22 Feb 2023",
+    detail: "LIT departure · LLWS / gust front, 5 fatal",
+    group: "llws",
+    ntsb: "CEN23FA113",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/106756/pdf",
+    origin: "KLIT",
+    destination: "KLIT",
+    airline: null,
+    fit: "fair",
+    waypoints: [
+      { icao: "KLIT", altFt: 262, time: "2023-02-22T17:54:40Z" },
+      { lat: 34.715, lon: -92.224, altFt: 400, time: "2023-02-22T17:56:00Z" },
+    ],
+    notes: [
+      "Short representative takeoff south from LIT, aligned to 11:56 CST (17:56Z) (CEN23FA113).",
+      "NTSB velocity imagery showed a radial wind shift at the accident site. The airplane is below useful beam height; the gust front may still appear on KLZK.",
+    ],
+  },
+  {
+    id: "n718fg",
+    flight: "N718FG",
+    aliases: [],
+    dateClean: "20240802",
+    dateInput: "2024-08-02",
+    dateAliases: [],
+    label: "N718FG · 2 Aug 2024",
+    detail: "Cullman, AL · wind shift after takeoff",
+    group: "llws",
+    ntsb: "ERA24LA344",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/194893/pdf",
+    origin: "KCMD",
+    destination: "KCMD",
+    airline: null,
+    fit: "weak",
+    waypoints: [
+      { icao: "KCMD", altFt: 803, time: "2024-08-02T16:39:00Z" },
+      { lat: 34.255, lon: -86.858, altFt: 1100, time: "2024-08-02T16:40:00Z" },
+    ],
+    notes: [
+      "Short representative takeoff from Cullman (KCMD) at 11:40 CDT (16:40Z) (ERA24LA344).",
+      "True low-level wind shift, but the beam will likely overshoot the airplane.",
+    ],
+  },
+  {
+    id: "n52175",
+    flight: "N52175",
+    aliases: [],
+    dateClean: "20250801",
+    dateInput: "2025-08-01",
+    dateAliases: ["20250731"],
+    label: "N52175 · 31 Jul 2025",
+    detail: "Kamiah, ID · microburst at rotation",
+    group: "llws",
+    ntsb: "WPR25LA235",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/200703/pdf",
+    origin: null,
+    destination: null,
+    airline: null,
+    fit: "weak",
+    waypoints: [
+      { lat: 46.2272, lon: -116.0273, altFt: 1200, time: "2025-08-01T01:42:00Z" },
+      { lat: 46.2200, lon: -116.0270, altFt: 1350, time: "2025-08-01T01:43:00Z" },
+    ],
+    notes: [
+      "Short representative takeoff at Kamiah, ID, aligned to 18:43 PDT (01:43Z 1 Aug) (WPR25LA235).",
+      "Remote terrain and no airport sensors. Poor NEXRAD geometry.",
+    ],
+  },
+  {
+    id: "n47wt",
+    flight: "N47WT",
+    aliases: [],
+    dateClean: "20240515",
+    dateInput: "2024-05-15",
+    dateAliases: [],
+    label: "N47WT · 15 May 2024",
+    detail: "REG–LOU · flight into growing convection, 3 fatal",
+    group: "ga",
+    ntsb: "ERA24FA217",
+    reportUrl: "https://data.ntsb.gov/carol-repgen/api/Aviation/ReportMain/GenerateNewestReport/194264/pdf",
+    origin: "KREG",
+    destination: "KLOU",
+    airline: null,
+    fit: "strong",
+    waypoints: [
+      { icao: "KREG", altFt: 32, time: "2024-05-15T13:50:00Z" },
+      { lat: 32.40, lon: -90.20, altFt: 9000, time: "2024-05-15T14:20:00Z" },
+      { lat: 34.20, lon: -88.40, altFt: 7000, time: "2024-05-15T15:40:00Z" },
+      { lat: 35.839129, lon: -87.072875, altFt: 9500, time: "2024-05-15T17:02:00Z" },
+    ],
+    notes: [
+      "Representative REG–LOU path ending at the Franklin, TN accident (ERA24FA217). Times are UTC, aligned to 12:02 CDT (17:02Z).",
+      "NTSB has ADS-B and a weather study. The cell was on WSR-88D but too small for BNA ASR-9/STARS.",
+    ],
+  },
+];
+
+export const EXAMPLE_FLIGHT = EXAMPLE_LIBRARY[0];
+
+function exampleIdents(example) {
+  return [example.flight, ...(example.aliases || [])].map((id) => String(id || "").toUpperCase().replace(/[\s-]/g, "")).filter(Boolean);
+}
+
+export function extraCallsignsFromLibrary(library = EXAMPLE_LIBRARY) {
+  const map = {};
+  for (const example of library) {
+    const all = exampleIdents(example);
+    for (const id of all) {
+      map[id] = all.filter((other) => other !== id);
+    }
+  }
+  return map;
+}
+
+export function findExample(flight, dateClean, library = EXAMPLE_LIBRARY) {
+  const raw = String(flight || "").toUpperCase().replace(/[\s-]/g, "");
+  if (!raw || !dateClean) return null;
+  for (const example of library) {
+    const dates = new Set([example.dateClean, ...(example.dateAliases || [])]);
+    if (!dates.has(dateClean)) continue;
+    if (exampleIdents(example).includes(raw)) return example;
+  }
+  return null;
+}
+
+export function findExampleById(id, library = EXAMPLE_LIBRARY) {
+  return library.find((example) => example.id === id) || null;
+}

@@ -5,6 +5,7 @@ import { defaultConcurrency } from "./pool.js";
 const MAX_FRAMES = 64;
 const cache = new Map();
 const inflight = new Map();
+let cacheEpoch = 0;
 
 export function uniquePlayFrames(samples, product = "reflectivity", tiltMode = "closest") {
   const seen = new Set();
@@ -41,6 +42,7 @@ export function setCachedFrame(key, frame) {
 }
 
 export function clearFrameCache() {
+  cacheEpoch += 1;
   cache.clear();
   inflight.clear();
 }
@@ -49,18 +51,25 @@ export function cachedFrameCount() {
   return cache.size;
 }
 
-export async function loadCachedRadar(sample, product = "reflectivity", { onProgress, tiltMode = "closest" } = {}) {
+export async function loadCachedRadar(sample, product = "reflectivity", {
+  onProgress,
+  tiltMode = "closest",
+  signal,
+} = {}) {
   const key = playbackFrameKey(sample, product, tiltMode);
   if (!key) throw new Error("This sample has no radar volume to load.");
   const hit = getCachedFrame(key);
   if (hit) return hit;
   if (inflight.has(key)) return inflight.get(key);
-  const pending = loadRadarForSample(sample, product, { onProgress, tiltMode })
+  const epoch = cacheEpoch;
+  const pending = loadRadarForSample(sample, product, { onProgress, tiltMode, signal })
     .then((frame) => {
-      setCachedFrame(key, frame);
+      if (epoch === cacheEpoch) setCachedFrame(key, frame);
       return frame;
     })
-    .finally(() => inflight.delete(key));
+    .finally(() => {
+      if (inflight.get(key) === pending) inflight.delete(key);
+    });
   inflight.set(key, pending);
   return pending;
 }
@@ -69,7 +78,9 @@ export async function prefetchPlayFrames(samples, product = "reflectivity", {
   concurrency = defaultConcurrency("decode"),
   onProgress,
   tiltMode = "closest",
+  signal,
 } = {}) {
+  const epoch = cacheEpoch;
   const items = uniquePlayFrames(samples, product, tiltMode);
   const pending = items.filter((item) => !hasCachedFrame(item.key) && !inflight.has(item.key));
   let done = items.length - pending.length;
@@ -77,12 +88,14 @@ export async function prefetchPlayFrames(samples, product = "reflectivity", {
   let i = 0;
   async function worker() {
     while (i < pending.length) {
+      if (epoch !== cacheEpoch || signal?.aborted) return;
       const item = pending[i++];
       try {
-        await loadCachedRadar(item.sample, product, { tiltMode });
+        await loadCachedRadar(item.sample, product, { tiltMode, signal });
       } catch {
         // Keep scrubbing usable even if one volume fails.
       }
+      if (epoch !== cacheEpoch) return;
       done += 1;
       onProgress?.({ done, total: items.length });
     }

@@ -6,7 +6,7 @@ Live: https://kenny150r.github.io/flight-wx/
 
 Enter a flight number and UTC date, or upload a CSV/GeoJSON track. The app looks up a public ADS-B trace when it can, walks the path across CONUS WSR-88D sites, downloads NOAA Level II volumes from the Unidata S3 archive in parallel, and samples reflectivity and velocity at flight level.
 
-**Example:** [Endeavor Air 4985 on 17 Jul 2025](https://kenny150r.github.io/flight-wx/?flight=EDV4985&date=20250717) (JFK–CVG, also `9E4985` / `DL4985`). Public historical ADS-B is not available for that day, so the app uses a bundled representative track along the scheduled route.
+**Examples:** Use the Examples menu for NTSB-aligned representative tracks (airline turbulence/hail, airport LLWS, and a few GA convective cases). Public historical ADS-B is usually missing, so these paths are synthesized along the scheduled route and timed to the reported encounter. Start with [Endeavor 4985](https://kenny150r.github.io/flight-wx/?flight=EDV4985&date=20250717) or [Southwest 2231](https://kenny150r.github.io/flight-wx/?flight=SWA2231&date=20250502).
 
 ## Run locally
 
@@ -27,17 +27,17 @@ time,lat,lon,alt_ft,heading,gs,vs
 2013-05-20T19:51:11Z,35.2,-97.1,35000,090,420,0
 ```
 
-Heading, ground speed (kt), and vertical speed (fpm) are optional. If they are missing, the app derives them from successive points. Clicking a sample shows flight level, heading, speed, and climb/descent at that point.
+Heading, ground speed (kt), and vertical speed (fpm) are optional. If they are missing, the app derives them from successive points. Time and altitude are required — the app will not invent “now” or 0 ft. Use `alt_m` for meters. Clicking a sample shows flight level, heading, speed, and climb/descent at that point.
 
-GeoJSON `Point`, `LineString`, or `FeatureCollection` also work. Optional `times` / `altitudes` properties on a LineString.
+GeoJSON `Point`, `LineString`, or `FeatureCollection` also work. `times` are required. `altitudes` / `alt_ft` are feet; `altitudes_m` / `alt_m` and coordinate Z are meters.
 
 An optional Mode-S hex helps historical [readsb globe-history](https://github.com/wiedehopf/readsb/blob/dev/README-json.md#trace-jsons) lookups. Public callsign APIs are best-effort and often fail for older dates — upload is the reliable path.
 
 ## What the numbers mean
 
-- **Max reflectivity** — dBZ at the aircraft, using the tilt whose 4/3-earth beam is closest to altitude. Nearby max is the strongest gate within 5 km on that tilt.
+- **Max reflectivity** — dBZ at the aircraft, using the tilt whose 4/3-earth beam is closest to altitude. Nearby max is the strongest gate within 5 km on that tilt. The 5 km mean series is the arithmetic mean of finite gates in that same window.
 - **Max composite reflectivity** — strongest dBZ in the column at that lat/lon (max over all tilts). Click the card to load the tilt that held the peak.
-- **Time series** — closest-beam dBZ, composite dBZ, and signed radial velocity along the flight. Click a peak, chart, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind). The popup and radar HUD show flight state at that point (flight level, heading, ground speed, vertical speed).
+- **Time series** — closest-beam dBZ, 5 km mean dBZ, composite dBZ, and signed radial velocity along the flight. Click a peak, chart, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind). The popup and radar HUD show flight state at that point (flight level, heading, ground speed, vertical speed).
 - **Play flight** — steps through the path in time, or drag the slider to scrub. Decoded radar frames are cached so station/tilt changes stay smooth after the first load.
 - **Max |Vr|** — NEXRAD radial velocity (toward/away from the radar), not true wind. No dealiasing.
 - **Max horizontal shear** — strongest azimuthal (gate-to-gate) radial-velocity shear in a ~2.5 km window, in kt/km and s⁻¹. Click the card to zoom to that event and load velocity.

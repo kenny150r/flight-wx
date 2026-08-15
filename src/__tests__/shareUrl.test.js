@@ -38,4 +38,15 @@ describe("shareUrl", () => {
     expect(clampShareFrame(99, 40)).toBe(40);
     expect(clampShareFrame(0, 40)).toBe(0);
   });
+
+  it("drops invalid dates", () => {
+    expect(parseShareSearch("flight=UAL1&date=abcdefgh")).toEqual({
+      flight: "UAL1",
+      date: "",
+      hex: "",
+      frame: 0,
+      play: false,
+      tilt: "closest",
+    });
+  });
 });
