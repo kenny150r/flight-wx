@@ -6,7 +6,8 @@ import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, playInd
 import { defaultConcurrency } from "./analysis/pool.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
-import { clearRadar, highlightSample, initMap, invalidateMapSize, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
+import { buildShareSearch, clampShareFrame, parseShareSearch } from "./analysis/shareUrl.js";
+import { clearRadar, EVENT_ZOOM, highlightSample, initMap, invalidateMapSize, mapZoom, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
 import {
   hideProgress,
   highlightReportSelection,
@@ -21,20 +22,14 @@ import {
 const $ = (id) => document.getElementById(id);
 
 function readParams() {
-  const q = new URLSearchParams(window.location.search);
-  return {
-    flight: q.get("flight") || "",
-    date: q.get("date") || "",
-    hex: q.get("hex") || "",
-  };
+  return parseShareSearch(window.location.search);
 }
 
-function writeParams({ flight, date, hex }) {
-  const q = new URLSearchParams();
-  if (flight) q.set("flight", flight);
-  if (date) q.set("date", date);
-  if (hex) q.set("hex", hex);
-  const next = `${window.location.pathname}${q.toString() ? `?${q}` : ""}${window.location.hash}`;
+function writeParams({ flight, date, hex, frame, play } = {}) {
+  const query = buildShareSearch({ flight, date, hex, frame, play });
+  const next = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (current === next) return;
   history.replaceState(null, "", next);
 }
 
@@ -110,9 +105,10 @@ export function boot() {
     loadedKey = "";
     updateRadarHud(hud, {});
     if (summary) refreshView();
+    syncShareUrl({ frame: 0, play: false });
   });
 
-  if (params.flight && params.date) run();
+  if (params.flight && params.date) run({ restore: { frame: params.frame, play: params.play } });
 
   function canPlay() {
     return playableSamples(summary?.samples || []).length > 0;
@@ -122,7 +118,7 @@ export function boot() {
     report.hidden = !visible;
     const bottom = $("bottom");
     if (bottom) bottom.hidden = !visible;
-    requestAnimationFrame(invalidateMapSize);
+    invalidateMapSize();
   }
 
   function setPlayStatus(text) {
@@ -166,19 +162,60 @@ export function boot() {
     return selectSample(sample, opts);
   }
 
+  async function restoreShare(restore) {
+    const samples = playableSamples(summary?.samples || []);
+    const frame = clampShareFrame(restore?.frame, samples.length);
+    if (restore?.play && samples.length) {
+      await playFlight({ from: frame ? frame - 1 : 0 });
+      return;
+    }
+    if (frame) {
+      await seekTo(frame - 1, { quiet: true, zoom: true });
+      return;
+    }
+    syncShareUrl({ play: false });
+  }
+
+  function shareFields(extra = {}) {
+    const samples = playableSamples(summary?.samples || []);
+    const index = playIndexOf(samples, selected);
+    return {
+      flight: $("flight").value.trim(),
+      date: dateInputToClean($("date").value),
+      hex: $("hex").value.trim(),
+      frame: selected && samples.length ? index + 1 : 0,
+      play: playing,
+      ...extra,
+    };
+  }
+
+  function syncShareUrl(extra) {
+    writeParams(shareFields(extra));
+  }
+
   function stopPlayback() {
+    if (!playing) return;
     playing = false;
     setPlayButtons(false, canPlay());
     setPlayStatus("");
+    syncShareUrl({ play: false });
   }
 
-  async function playFlight() {
+  async function playFlight({ from } = {}) {
     const samples = playableSamples(summary?.samples || []);
     if (!samples.length || playing) return;
     product = "reflectivity";
     playing = true;
     setPlayButtons(true, true);
-    let i = nextPlayIndex(samples, selected);
+    let i = Number.isFinite(from)
+      ? Math.max(0, Math.min(from, samples.length - 1))
+      : nextPlayIndex(samples, selected);
+    if (mapZoom() < EVENT_ZOOM - 0.4) {
+      zoomToSample(samples[i]);
+      await sleep(500);
+      if (!playing) return;
+    }
+    syncShareUrl({ play: true, frame: i + 1 });
     while (playing && i < samples.length) {
       await selectSample(samples[i], { quiet: true, keepPlaying: true });
       if (!playing) break;
@@ -188,6 +225,7 @@ export function boot() {
     playing = false;
     setPlayButtons(false, canPlay());
     setPlayStatus("");
+    syncShareUrl({ play: false });
   }
 
   async function selectSample(sample, { reload = false, quiet = false, product: nextProduct, zoom, keepPlaying = false } = {}) {
@@ -215,13 +253,15 @@ export function boot() {
     }
     if (sameFrame) {
       updateRadarHud(hud, { sample, product });
+      syncShareUrl();
       return;
     }
     if (cached) {
       loadedKey = frameKey;
-      showRadarFrame(cached, sample, { zoom: quiet });
+      showRadarFrame(cached, sample);
       updateRadarHud(hud, { sample, product });
       prefetchAhead(sample);
+      syncShareUrl();
       return;
     }
     const token = ++loadToken;
@@ -234,13 +274,15 @@ export function boot() {
       });
       if (token !== loadToken) return;
       loadedKey = frameKey;
-      showRadarFrame(frame, sample, { zoom: quiet });
+      showRadarFrame(frame, sample);
       updateRadarHud(hud, { sample, product });
       prefetchAhead(sample);
+      syncShareUrl();
     } catch (err) {
       if (token !== loadToken) return;
       loadedKey = "";
       updateRadarHud(hud, { sample, product, error: err.message || String(err) });
+      syncShareUrl();
     }
   }
 
@@ -261,12 +303,18 @@ export function boot() {
     }).catch(() => {});
   }
 
-  async function run() {
+  async function run({ restore } = {}) {
     const flight = $("flight").value.trim();
     const dateClean = dateInputToClean($("date").value);
     const hex = $("hex").value.trim();
     const file = $("track-file").files[0];
-    writeParams({ flight, date: dateClean, hex });
+    writeParams({
+      flight,
+      date: dateClean,
+      hex,
+      frame: restore?.frame,
+      play: restore?.play,
+    });
     setResultsVisible(false);
     stopPlayback();
     selected = null;
@@ -313,6 +361,7 @@ export function boot() {
       setResultsVisible(true);
       startPrefetch();
       setStatus(status, `Analyzed ${summary.samples.length} samples across ${summary.sites.length} radars. Play flight or drag the slider to scrub.`, "ok");
+      await restoreShare(restore);
     } catch (err) {
       hideProgress(progress);
       setStatus(status, err.message || String(err), "error");

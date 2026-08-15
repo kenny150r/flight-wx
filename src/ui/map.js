@@ -37,11 +37,19 @@ let onSelectCb = null;
 
 export function initMap(el) {
   if (map) return map;
-  map = L.map(el, { zoomControl: false, attributionControl: true }).setView([39.8, -98.5], 4);
+  map = L.map(el, {
+    zoomControl: false,
+    attributionControl: true,
+    fadeAnimation: false,
+    zoomAnimation: true,
+  }).setView([39.8, -98.5], 4);
   L.control.zoom({ position: "bottomleft" }).addTo(map);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution: "&copy; OpenStreetMap &copy; CARTO",
     maxZoom: 18,
+    keepBuffer: 6,
+    updateWhenZooming: false,
+    updateWhenIdle: false,
   }).addTo(map);
   window.addEventListener("resize", invalidateMapSize);
   requestAnimationFrame(invalidateMapSize);
@@ -49,7 +57,7 @@ export function initMap(el) {
 }
 
 export function invalidateMapSize() {
-  map?.invalidateSize();
+  map?.invalidateSize({ animate: false, pan: false });
 }
 
 export function drawRangeRings(lat, lon, maxRangeKm = 230, stationId = "") {
@@ -136,31 +144,52 @@ export function renderTrack(summary, { onSelect, selected } = {}) {
 
 export const EVENT_ZOOM = 9;
 
+export function mapZoom() {
+  return map?.getZoom() ?? 0;
+}
+
 export function zoomToSample(sample, { zoom = EVENT_ZOOM } = {}) {
   if (!map || !sample || !Number.isFinite(sample.lat) || !Number.isFinite(sample.lon)) return;
   map.flyTo([sample.lat, sample.lon], zoom, { duration: 0.55 });
 }
 
-export function highlightSample(sample, { openPopup = true, follow = false } = {}) {
-  if (!map) return;
-  if (selectedMarker) {
-    map.removeLayer(selectedMarker);
-    selectedMarker = null;
-  }
-  if (!sample) return;
-  selectedMarker = L.circleMarker([sample.lat, sample.lon], {
-    radius: 10,
-    color: "#f0b429",
-    fillColor: "#f0b429",
-    fillOpacity: 0.15,
-    weight: 2,
-  }).addTo(map);
-  selectedMarker.bindPopup(flightStatePopupHtml(sample), { maxWidth: 280, className: "wx-popup-wrap" });
-  if (openPopup) selectedMarker.openPopup();
-  if (follow) map.panTo([sample.lat, sample.lon], { animate: true, duration: 0.35 });
+export function followSample(sample, { padding = 0.28 } = {}) {
+  if (!map || !sample || !Number.isFinite(sample.lat) || !Number.isFinite(sample.lon)) return;
+  const latlng = L.latLng(sample.lat, sample.lon);
+  if (map.getBounds().pad(-padding).contains(latlng)) return;
+  map.panTo(latlng, { animate: true, duration: 0.35, easeLinearity: 0.2 });
 }
 
-export function showRadarFrame(frame, sample, { zoom = true } = {}) {
+export function highlightSample(sample, { openPopup = true, follow = false } = {}) {
+  if (!map) return;
+  if (!sample) {
+    if (selectedMarker) {
+      map.removeLayer(selectedMarker);
+      selectedMarker = null;
+    }
+    return;
+  }
+  const latlng = [sample.lat, sample.lon];
+  const html = flightStatePopupHtml(sample);
+  if (selectedMarker) {
+    selectedMarker.setLatLng(latlng);
+    selectedMarker.setPopupContent(html);
+  } else {
+    selectedMarker = L.circleMarker(latlng, {
+      radius: 10,
+      color: "#f0b429",
+      fillColor: "#f0b429",
+      fillOpacity: 0.15,
+      weight: 2,
+    }).addTo(map);
+    selectedMarker.bindPopup(html, { maxWidth: 280, className: "wx-popup-wrap" });
+  }
+  if (openPopup) selectedMarker.openPopup();
+  else selectedMarker.closePopup();
+  if (follow) followSample(sample);
+}
+
+export function showRadarFrame(frame, sample, { zoom = false, highlight = false } = {}) {
   if (!map || !frame) return;
   const decoded = decodePolarData(frame);
   if (radarLayer) {
@@ -172,7 +201,7 @@ export function showRadarFrame(frame, sample, { zoom = true } = {}) {
   drawRangeRings(frame.lat, frame.lon, frame.max_range_km, frame.station || sample?.stationId);
   if (sample) {
     if (zoom) zoomToSample(sample);
-    highlightSample(sample, { openPopup: false });
+    if (highlight) highlightSample(sample, { openPopup: false });
   }
 }
 

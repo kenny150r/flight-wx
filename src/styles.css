@@ -290,6 +290,7 @@ input[type="range"] {
 #map {
   position: absolute;
   inset: 0;
+  background: var(--bg);
 }
 
 .bottom {
