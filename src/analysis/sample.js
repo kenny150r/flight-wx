@@ -1,5 +1,6 @@
 import { bearingDeg, haversineKm } from "./geo.js";
 import { altFtToM, altMToFt, pickBestTilt } from "./beam.js";
+import { flightLevel, flightPhase } from "./flightState.js";
 import { neighborhoodMaxAbs, samplePolar } from "./polar.js";
 import { computeShear, computeVerticalShear, verticalFromRadial } from "./shear.js";
 
@@ -33,6 +34,13 @@ export function sampleExtractedVolume(extracted, points) {
       lat: point.lat,
       lon: point.lon,
       altFt: point.altFt || 0,
+      flightLevel: point.flightLevel || flightLevel(point.altFt),
+      headingDeg: point.headingDeg,
+      gsKt: point.gsKt,
+      vsFpm: point.vsFpm,
+      tasKt: point.tasKt,
+      iasKt: point.iasKt,
+      phase: point.phase || flightPhase(point.altFt, point.vsFpm, point.onGround),
       stationId: point.station?.id || extracted.stationId || null,
       rangeKm,
       azimuthDeg: azDeg,

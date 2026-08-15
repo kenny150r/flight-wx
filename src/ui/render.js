@@ -1,3 +1,4 @@
+import { formatFlightState } from "../analysis/flightState.js";
 import { MS_TO_KT } from "../analysis/shear.js";
 import { renderSeries, updateSeriesCursor } from "./series.js";
 
@@ -14,14 +15,13 @@ function fmtTime(ms) {
 function peakMeta(peak) {
   if (!peak?.sample) return "No sample";
   const s = peak.sample;
-  const fl = s.altFt ? `FL${String(Math.round(s.altFt / 100)).padStart(3, "0")}` : "";
   const tilt = Number.isFinite(s.elevation) ? `${s.elevation.toFixed(1)}°` : "—";
   const beam = Number.isFinite(s.beamErrorFt) ? `${Math.round(s.beamErrorFt)} ft beam error` : "";
   return [
     fmtTime(s.timeMs),
-    `${s.lat.toFixed(3)}, ${s.lon.toFixed(3)}`,
-    [s.stationId, fl, `closest tilt ${tilt}`, beam].filter(Boolean).join(" · "),
-  ].join("\n");
+    formatFlightState(s, { coords: true }),
+    [s.stationId, `closest tilt ${tilt}`, beam].filter(Boolean).join(" · "),
+  ].filter(Boolean).join("\n");
 }
 
 function sameSample(a, b) {
@@ -142,6 +142,11 @@ export function updateRadarHud(el, { sample, product, loading, error } = {}) {
       ? error
       : `${sample.stationId} · ${when} · ${tilt}`;
   el.querySelector("[data-hud-title]").textContent = title;
+  const stateEl = el.querySelector("[data-hud-state]");
+  if (stateEl) {
+    stateEl.textContent = sample ? formatFlightState(sample) : "";
+    stateEl.hidden = !sample;
+  }
   el.querySelectorAll("[data-product]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.product === product);
   });

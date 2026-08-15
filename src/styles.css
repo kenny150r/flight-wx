@@ -310,6 +310,33 @@ tr { cursor: pointer; }
   color: var(--muted);
 }
 
+.hud-state {
+  margin-top: 6px;
+  color: var(--text);
+  font: 12px/1.4 "IBM Plex Mono", ui-monospace, monospace;
+  white-space: pre-wrap;
+}
+
+.leaflet-popup.wx-popup-wrap .leaflet-popup-content-wrapper,
+.leaflet-popup.wx-popup-wrap .leaflet-popup-tip {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+.wx-popup { font: 13px/1.4 "IBM Plex Sans", "Segoe UI", sans-serif; }
+.wx-popup-time { color: var(--muted); font-size: 0.75rem; }
+.wx-popup-state {
+  margin-top: 4px;
+  font: 12px/1.45 "IBM Plex Mono", ui-monospace, monospace;
+}
+.wx-popup-radar {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 @media (max-width: 860px) {
   body { grid-template-columns: 1fr; }
   .stage { min-height: 55vh; }

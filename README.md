@@ -23,9 +23,11 @@ Open http://localhost:8000.
 CSV header (names are flexible):
 
 ```
-time,lat,lon,alt_ft
-2013-05-20T19:51:11Z,35.2,-97.1,35000
+time,lat,lon,alt_ft,heading,gs,vs
+2013-05-20T19:51:11Z,35.2,-97.1,35000,090,420,0
 ```
+
+Heading, ground speed (kt), and vertical speed (fpm) are optional. If they are missing, the app derives them from successive points. Clicking a sample shows flight level, heading, speed, and climb/descent at that point.
 
 GeoJSON `Point`, `LineString`, or `FeatureCollection` also work. Optional `times` / `altitudes` properties on a LineString.
 
@@ -34,7 +36,7 @@ An optional Mode-S hex helps historical [readsb globe-history](https://github.co
 ## What the numbers mean
 
 - **Max dBZ** — reflectivity at the aircraft, using the tilt whose 4/3-earth beam is closest to altitude. Nearby max is the strongest gate within 5 km.
-- **Time series** — dBZ and signed radial velocity along the flight. Click a peak, chart, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind) at the closest-beam tilt.
+- **Time series** — dBZ and signed radial velocity along the flight. Click a peak, chart, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind) at the closest-beam tilt. The popup and radar HUD show flight state at that point (flight level, heading, ground speed, vertical speed).
 - **Play flight** — steps through the path in time, moving the aircraft and loading a new reflectivity overlay whenever the station, volume, or closest-beam tilt changes.
 - **Max |Vr|** — NEXRAD radial velocity (toward/away from the radar), not true wind. No dealiasing.
 - **Max horizontal shear** — strongest azimuthal (gate-to-gate) radial-velocity shear in a ~2.5 km window, in kt/km and s⁻¹. Click the card to zoom to that event and load velocity.

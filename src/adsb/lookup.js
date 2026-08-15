@@ -60,6 +60,11 @@ async function fetchLiveAircraft(candidates, { signal } = {}) {
             lat: ac.lat,
             lon: ac.lon,
             altFt: Number(ac.alt_baro === "ground" ? 0 : ac.alt_baro || ac.alt_geom || 0),
+            headingDeg: Number(ac.track ?? ac.true_heading ?? ac.mag_heading),
+            gsKt: Number(ac.gs),
+            vsFpm: Number(ac.baro_rate ?? ac.geom_rate),
+            tasKt: Number(ac.tas),
+            iasKt: Number(ac.ias),
             timeMs: Date.now() - Math.round((Number(ac.seen) || 0) * 1000),
           };
         }
@@ -143,6 +148,11 @@ export async function lookupFlightTrack({ flight, dateClean, hex, signal } = {})
             lat: live.lat,
             lon: live.lon,
             altFt: live.altFt,
+            headingDeg: live.headingDeg,
+            gsKt: live.gsKt,
+            vsFpm: live.vsFpm,
+            tasKt: live.tasKt,
+            iasKt: live.iasKt,
           }],
           callsign: callsign || normalizeIdent(live.flight),
           hex: live.hex,

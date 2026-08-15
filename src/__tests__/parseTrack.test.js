@@ -43,6 +43,14 @@ describe("track parse", () => {
     expect(points[0].altFt).toBe(35000);
   });
 
+  it("parses optional heading and speed columns", () => {
+    const csv = "time,lat,lon,alt_ft,heading,gs,vs\n2013-05-20T19:51:11Z,35.2,-97.1,35000,247,420,-100\n";
+    const points = parseCsvTrack(csv);
+    expect(points[0].headingDeg).toBe(247);
+    expect(points[0].gsKt).toBe(420);
+    expect(points[0].vsFpm).toBe(-100);
+  });
+
   it("parses GeoJSON LineString", () => {
     const gj = {
       type: "Feature",
@@ -66,6 +74,8 @@ describe("track parse", () => {
     const points = parseReadsbTrace(json, { callsign: "UAL123" });
     expect(points).toHaveLength(2);
     expect(points[1].lat).toBeCloseTo(35.4);
+    expect(points[0].gsKt).toBe(400);
+    expect(points[0].headingDeg).toBe(90);
   });
 
   it("detects JSON from file contents", () => {

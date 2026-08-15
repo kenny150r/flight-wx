@@ -1,3 +1,4 @@
+import { flightStatePopupHtml } from "../analysis/flightState.js";
 import { decodePolarData } from "./polarData.js";
 import { RadarGLLayer } from "./radarLayer.js";
 
@@ -96,9 +97,7 @@ export function highlightSample(sample, { openPopup = true, follow = false } = {
     fillOpacity: 0.15,
     weight: 2,
   }).addTo(map);
-  selectedMarker.bindPopup(
-    `${sample.stationId || "n/a"} · ${Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "—"} · ${Number.isFinite(sample.dbz) ? `${sample.dbz.toFixed(1)} dBZ` : "—"}`,
-  );
+  selectedMarker.bindPopup(flightStatePopupHtml(sample), { maxWidth: 280, className: "wx-popup-wrap" });
   if (openPopup) selectedMarker.openPopup();
   if (follow) map.panTo([sample.lat, sample.lon], { animate: true, duration: 0.35 });
 }

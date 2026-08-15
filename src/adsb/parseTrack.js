@@ -46,6 +46,11 @@ export function parseCsvTrack(text) {
   const iLat = headerIndex(headers, ["lat", "latitude"]);
   const iLon = headerIndex(headers, ["lon", "lng", "longitude", "long"]);
   const iAlt = headerIndex(headers, ["altft", "altitudeft", "altbaro", "alt", "altitude", "baroaltitude"]);
+  const iHdg = headerIndex(headers, ["heading", "headingdeg", "track", "hdg", "course", "truetrack"]);
+  const iGs = headerIndex(headers, ["gskt", "gs", "groundspeed", "speedkt", "speed", "gndspd"]);
+  const iVs = headerIndex(headers, ["vsfpm", "vs", "verticalrate", "barorate", "roc", "vsftmin"]);
+  const iTas = headerIndex(headers, ["taskt", "tas"]);
+  const iIas = headerIndex(headers, ["iaskt", "ias"]);
   if (iLat < 0 || iLon < 0) throw new Error("CSV must include lat and lon columns");
   const points = [];
   for (const line of lines.slice(1)) {
@@ -60,6 +65,11 @@ export function parseCsvTrack(text) {
       lat,
       lon,
       altFt: Number.isFinite(altFt) ? altFt : 0,
+      headingDeg: iHdg >= 0 ? num(cols[iHdg]) : NaN,
+      gsKt: iGs >= 0 ? num(cols[iGs]) : NaN,
+      vsFpm: iVs >= 0 ? num(cols[iVs]) : NaN,
+      tasKt: iTas >= 0 ? num(cols[iTas]) : NaN,
+      iasKt: iIas >= 0 ? num(cols[iIas]) : NaN,
     });
   }
   if (!points.length) throw new Error("CSV contained no valid lat/lon rows");
@@ -70,7 +80,7 @@ export function parseCsvTrack(text) {
   return points.sort((a, b) => a.timeMs - b.timeMs);
 }
 
-function pushCoord(points, coord, timeMs, altFt) {
+function pushCoord(points, coord, timeMs, altFt, extra = {}) {
   if (!Array.isArray(coord) || coord.length < 2) return;
   const lon = num(coord[0]);
   const lat = num(coord[1]);
@@ -81,6 +91,11 @@ function pushCoord(points, coord, timeMs, altFt) {
     lat,
     lon,
     altFt: Number.isFinite(altFt) ? altFt : (Number.isFinite(altM) ? altM * 3.28084 : 0),
+    headingDeg: num(extra.headingDeg),
+    gsKt: num(extra.gsKt),
+    vsFpm: num(extra.vsFpm),
+    tasKt: num(extra.tasKt),
+    iasKt: num(extra.iasKt),
   });
 }
 
@@ -89,7 +104,19 @@ function walkGeometry(geom, props, points) {
   const times = props.times || props.time || props.timestamps;
   const alts = props.altitudes || props.alt_ft || props.alt;
   if (geom.type === "Point") {
-    pushCoord(points, geom.coordinates, parseTimeMs(props.time || props.timestamp), num(props.alt_ft ?? props.alt ?? props.altitude));
+    pushCoord(
+      points,
+      geom.coordinates,
+      parseTimeMs(props.time || props.timestamp),
+      num(props.alt_ft ?? props.alt ?? props.altitude),
+      {
+        headingDeg: num(props.heading ?? props.track ?? props.hdg),
+        gsKt: num(props.gs ?? props.groundspeed ?? props.speed),
+        vsFpm: num(props.vs ?? props.vertical_rate ?? props.baro_rate),
+        tasKt: num(props.tas),
+        iasKt: num(props.ias),
+      },
+    );
   } else if (geom.type === "LineString" || geom.type === "MultiPoint") {
     geom.coordinates.forEach((c, i) => {
       const t = Array.isArray(times) ? parseTimeMs(times[i]) : parseTimeMs(times);
@@ -135,15 +162,23 @@ export function parseReadsbTrace(json, { callsign } = {}) {
     if (!Array.isArray(row) || row.length < 4) continue;
     const [dt, lat, lon, alt] = row;
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-    const extra = row[8];
+    const extra = row[8] && typeof row[8] === "object" ? row[8] : null;
     const flight = String(extra?.flight || "").toUpperCase().replace(/\s+/g, "");
     if (want && flight && flight !== want) continue;
+    const gs = Number(extra?.gs ?? row[4]);
+    const heading = Number(extra?.true_heading ?? extra?.track ?? row[5]);
+    const vs = Number(extra?.baro_rate ?? extra?.geom_rate ?? row[7]);
     const point = {
       timeMs: base + Number(dt) * 1000,
       lat,
       lon,
       altFt: alt === "ground" ? 0 : (Number.isFinite(Number(alt)) ? Number(alt) : 0),
       onGround: alt === "ground",
+      headingDeg: Number.isFinite(heading) ? heading : NaN,
+      gsKt: Number.isFinite(gs) ? gs : NaN,
+      vsFpm: Number.isFinite(vs) ? vs : NaN,
+      tasKt: Number.isFinite(Number(extra?.tas)) ? Number(extra.tas) : NaN,
+      iasKt: Number.isFinite(Number(extra?.ias)) ? Number(extra.ias) : NaN,
     };
     all.push(point);
     if (want && flight === want) matched.push(point);

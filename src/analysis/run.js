@@ -1,6 +1,7 @@
 import { getStationList } from "../radar/data/stations.js";
 import { L2_BUCKET, downloadVolume, listL2Scans } from "../radar/decode/radarClient.js";
 import { sampleL2InWorker } from "../radar/decode/workers.js";
+import { enrichFlightState } from "./flightState.js";
 import { assignStations } from "./nearest.js";
 import { resampleTrack } from "./resample.js";
 import { summarizeSamples } from "./report.js";
@@ -21,13 +22,14 @@ async function mapPool(items, limit, fn) {
 
 export async function analyzeTrack(points, { signal, onProgress } = {}) {
   if (!points.length) throw new Error("No track points to analyze");
+  const track = enrichFlightState(points);
   const stations = getStationList();
   let stride = DEFAULT_STRIDE_SEC;
   let assigned = [];
   let plan = { volumes: [] };
 
   for (;;) {
-    const resampled = resampleTrack(points, stride);
+    const resampled = resampleTrack(track, stride);
     assigned = assignStations(resampled, stations);
     onProgress?.({ phase: "listing", text: `Planning radar volumes (stride ${stride}s)…` });
     plan = await planVolumes(assigned, { listScans: (id, date) => listL2Scans(id, date, { signal }) });
