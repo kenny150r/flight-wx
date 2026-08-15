@@ -3,21 +3,122 @@ import { L2_BUCKET, downloadVolume, listL2Scans } from "../radar/decode/radarCli
 import { sampleL2InWorker } from "../radar/decode/workers.js";
 import { enrichFlightState } from "./flightState.js";
 import { assignStations } from "./nearest.js";
+import { defaultConcurrency } from "./pool.js";
 import { resampleTrack } from "./resample.js";
 import { summarizeSamples } from "./report.js";
-import { DEFAULT_STRIDE_SEC, MAX_VOLUMES, planVolumes } from "./volumePlan.js";
+import { DEFAULT_STRIDE_SEC, planVolumes } from "./volumePlan.js";
 
-async function mapPool(items, limit, fn) {
-  const out = new Array(items.length);
-  let i = 0;
-  async function worker() {
-    while (i < items.length) {
-      const idx = i++;
-      out[idx] = await fn(items[idx], idx);
+export async function ingestVolumes(volumes, {
+  signal,
+  onProgress,
+  download,
+  sample,
+  downloadLimit = defaultConcurrency("download"),
+  sampleLimit = defaultConcurrency("decode"),
+} = {}) {
+  const downloadVolumeFn = download || ((volume) => downloadVolume(L2_BUCKET, volume.key, { signal }));
+  const sampleVolumeFn = sample || ((raw, volume, onProg) => sampleL2InWorker(raw, {
+    station: volume.station,
+    points: volume.points,
+    s3Key: volume.key,
+    dateClean: volume.dateClean,
+    timeClean: volume.timeClean,
+  }, onProg));
+  const queue = [];
+  const waiters = [];
+  let nextDownload = 0;
+  let downloadsFinished = 0;
+  let sampled = 0;
+  let bytes = 0;
+  const out = new Array(volumes.length);
+
+  const wake = () => {
+    while (waiters.length) waiters.shift()();
+  };
+
+  async function downloader() {
+    while (nextDownload < volumes.length) {
+      const idx = nextDownload++;
+      const volume = volumes[idx];
+      onProgress?.({
+        phase: "download",
+        text: `Downloading ${volume.station.id} (${Math.min(downloadsFinished + 1, volumes.length)}/${volumes.length})…`,
+        done: sampled,
+        total: volumes.length,
+        bytes,
+      });
+      try {
+        const raw = await downloadVolumeFn(volume);
+        bytes += raw.byteLength;
+        queue.push({ idx, volume, raw });
+      } catch (error) {
+        queue.push({ idx, volume, error });
+      }
+      downloadsFinished += 1;
+      wake();
     }
   }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
-  return out;
+
+  async function sampler() {
+    for (;;) {
+      if (!queue.length) {
+        if (downloadsFinished >= volumes.length) return;
+        await new Promise((resolve) => {
+          if (queue.length || downloadsFinished >= volumes.length) resolve();
+          else waiters.push(resolve);
+        });
+        continue;
+      }
+      const item = queue.shift();
+      if (item.error) {
+        out[item.idx] = [];
+      } else {
+        onProgress?.({
+          phase: "decode",
+          text: `Sampling ${item.volume.station.id} (${sampled + 1}/${volumes.length})…`,
+          done: sampled,
+          total: volumes.length,
+          bytes,
+        });
+        try {
+          const { samples } = await sampleVolumeFn(
+            item.raw,
+            item.volume,
+            (prog) => onProgress?.({ ...prog, done: sampled, total: volumes.length, bytes }),
+          );
+          out[item.idx] = samples.map((sample) => ({
+            ...sample,
+            s3Key: item.volume.key,
+            dateClean: item.volume.dateClean,
+            timeClean: item.volume.timeClean,
+          }));
+        } catch {
+          out[item.idx] = [];
+        }
+      }
+      sampled += 1;
+      onProgress?.({
+        phase: "decode",
+        text: `Sampled ${sampled}/${volumes.length} volumes`,
+        done: sampled,
+        total: volumes.length,
+        bytes,
+      });
+    }
+  }
+
+  const downloaders = Array.from(
+    { length: Math.min(downloadLimit, volumes.length) },
+    () => downloader(),
+  );
+  const samplers = Array.from(
+    { length: Math.min(sampleLimit, volumes.length) },
+    () => sampler(),
+  );
+  await Promise.all(downloaders);
+  wake();
+  await Promise.all(samplers);
+  return { chunks: out.filter(Boolean), bytes };
 }
 
 export async function analyzeTrack(points, { signal, onProgress } = {}) {
@@ -46,53 +147,8 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
     });
   }
 
-  let bytes = 0;
-  let done = 0;
-  const sampleChunks = await mapPool(plan.volumes, 2, async (volume, idx) => {
-    onProgress?.({
-      phase: "download",
-      text: `Downloading ${volume.station.id} ${volume.timeClean} (${idx + 1}/${plan.volumes.length})…`,
-      done,
-      total: plan.volumes.length,
-      bytes,
-    });
-    const raw = await downloadVolume(L2_BUCKET, volume.key, {
-      signal,
-      onProgress: (p) => {
-        onProgress?.({
-          phase: "download",
-          text: `Downloading ${volume.station.id}… ${p.total ? Math.round((p.loaded / p.total) * 100) : 0}%`,
-          done,
-          total: plan.volumes.length,
-          bytes: bytes + (p.loaded || 0),
-        });
-      },
-    });
-    bytes += raw.byteLength;
-    onProgress?.({
-      phase: "decode",
-      text: `Sampling ${volume.station.id} (${idx + 1}/${plan.volumes.length})…`,
-      done,
-      total: plan.volumes.length,
-      bytes,
-    });
-    const { samples } = await sampleL2InWorker(raw, {
-      station: volume.station,
-      points: volume.points,
-      s3Key: volume.key,
-      dateClean: volume.dateClean,
-      timeClean: volume.timeClean,
-    }, (prog) => onProgress?.({ ...prog, done, total: plan.volumes.length, bytes }));
-    done += 1;
-    return samples.map((sample) => ({
-      ...sample,
-      s3Key: volume.key,
-      dateClean: volume.dateClean,
-      timeClean: volume.timeClean,
-    }));
-  });
-
-  const samples = sampleChunks.flat();
+  const { chunks, bytes } = await ingestVolumes(plan.volumes, { signal, onProgress });
+  const samples = chunks.flat();
   const summary = summarizeSamples(samples, {
     trackCount: assigned.length,
     volumeCount: plan.volumes.length,

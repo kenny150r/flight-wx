@@ -1,5 +1,6 @@
 import { loadRadarForSample } from "./loadRadar.js";
 import { playbackFrameKey, playableSamples } from "./playback.js";
+import { defaultConcurrency } from "./pool.js";
 
 const MAX_FRAMES = 64;
 const cache = new Map();
@@ -64,7 +65,10 @@ export async function loadCachedRadar(sample, product = "reflectivity", { onProg
   return pending;
 }
 
-export async function prefetchPlayFrames(samples, product = "reflectivity", { concurrency = 1, onProgress } = {}) {
+export async function prefetchPlayFrames(samples, product = "reflectivity", {
+  concurrency = defaultConcurrency("decode"),
+  onProgress,
+} = {}) {
   const items = uniquePlayFrames(samples, product);
   const pending = items.filter((item) => !hasCachedFrame(item.key) && !inflight.has(item.key));
   let done = items.length - pending.length;

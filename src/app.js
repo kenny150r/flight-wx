@@ -3,6 +3,7 @@ import { lookupFlightTrack } from "./adsb/lookup.js";
 import { parseTrackFile } from "./adsb/parseTrack.js";
 import { clearFrameCache, getCachedFrame, loadCachedRadar, prefetchPlayFrames } from "./analysis/frameCache.js";
 import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, playIndexOf, sleep } from "./analysis/playback.js";
+import { defaultConcurrency } from "./analysis/pool.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean } from "./analysis/geo.js";
 import { clearRadar, highlightSample, initMap, invalidateMapSize, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
@@ -246,13 +247,13 @@ export function boot() {
   function prefetchAhead(fromSample) {
     const samples = playableSamples(summary?.samples || []);
     const i = playIndexOf(samples, fromSample);
-    prefetchPlayFrames(samples.slice(i, i + 16), product, { concurrency: 1 }).catch(() => {});
+    prefetchPlayFrames(samples.slice(i, i + 16), product, { concurrency: defaultConcurrency("decode") }).catch(() => {});
   }
 
   function startPrefetch() {
     const samples = playableSamples(summary?.samples || []);
     prefetchPlayFrames(samples, product, {
-      concurrency: 1,
+      concurrency: defaultConcurrency("decode"),
       onProgress: ({ done, total }) => {
         cacheText = done < total ? `Cached ${done}/${total} scans` : "Scans cached";
         syncSlider();

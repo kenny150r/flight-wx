@@ -18,6 +18,13 @@ export async function listL2Scans(stationId, dateClean, { signal } = {}) {
   return { station: stationId, date: dateClean, count: scans.length, scans };
 }
 
+const inflightDownloads = new Map();
+
+function copyBytes(bytes) {
+  if (!bytes) return bytes;
+  return bytes instanceof Uint8Array ? bytes.slice() : new Uint8Array(bytes);
+}
+
 async function getCachedBytes(key) {
   const rec = await idbGet(key);
   if (!rec?.value) return null;
@@ -27,10 +34,17 @@ async function getCachedBytes(key) {
 export async function downloadVolume(bucket, key, { signal, onProgress } = {}) {
   const cacheKey = `raw:${bucket}:${key}`;
   const cached = await getCachedBytes(cacheKey);
-  if (cached) return cached;
-  const bytes = await getS3Object(bucket, key, { signal, onProgress });
-  await idbSet(cacheKey, bytes, bytes.byteLength);
-  return bytes;
+  if (cached) return copyBytes(cached);
+  const existing = inflightDownloads.get(cacheKey);
+  if (existing) return copyBytes(await existing);
+  const pending = getS3Object(bucket, key, { signal, onProgress })
+    .then(async (bytes) => {
+      await idbSet(cacheKey, bytes, bytes.byteLength);
+      return bytes;
+    })
+    .finally(() => inflightDownloads.delete(cacheKey));
+  inflightDownloads.set(cacheKey, pending);
+  return copyBytes(await pending);
 }
 
 export { L2_BUCKET };

@@ -1,5 +1,6 @@
 import { addUtcDays, utcDateClean, utcTimeHms } from "./geo.js";
 import { findClosestByTime } from "../radar/decode/sweeps.js";
+import { defaultConcurrency, mapPool } from "./pool.js";
 
 export const MAX_VOLUMES = 80;
 export const SCAN_TOLERANCE_SEC = 360;
@@ -11,15 +12,23 @@ function datesAround(dateClean) {
 
 export async function planVolumes(assigned, { listScans, maxVolumes = MAX_VOLUMES } = {}) {
   const covered = assigned.filter((p) => p.station);
-  const scanCache = new Map();
-
-  async function scansFor(stationId, dateClean) {
-    const key = `${stationId}:${dateClean}`;
-    if (!scanCache.has(key)) {
-      scanCache.set(key, listScans(stationId, dateClean).catch(() => ({ scans: [] })));
+  const listKeys = [];
+  const seen = new Set();
+  for (const point of covered) {
+    const dateClean = utcDateClean(point.timeMs);
+    for (const date of datesAround(dateClean)) {
+      const key = `${point.station.id}:${date}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      listKeys.push({ key, stationId: point.station.id, dateClean: date });
     }
-    return scanCache.get(key);
   }
+
+  const scanCache = new Map();
+  await mapPool(listKeys, defaultConcurrency("list"), async (item) => {
+    const listed = await listScans(item.stationId, item.dateClean).catch(() => ({ scans: [] }));
+    scanCache.set(item.key, listed);
+  });
 
   const volumeMap = new Map();
   for (const point of covered) {
@@ -28,7 +37,7 @@ export async function planVolumes(assigned, { listScans, maxVolumes = MAX_VOLUME
     let match = null;
     let usedDate = dateClean;
     for (const date of datesAround(dateClean)) {
-      const listed = await scansFor(point.station.id, date);
+      const listed = scanCache.get(`${point.station.id}:${date}`) || { scans: [] };
       match = findClosestByTime(listed.scans || [], target, SCAN_TOLERANCE_SEC);
       if (match) {
         usedDate = date;
