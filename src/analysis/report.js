@@ -1,3 +1,4 @@
+import { compositeView } from "./sample.js";
 import { MS_TO_KT, shearToKtPer1000Ft, shearToKtPerKm } from "./shear.js";
 
 function peakBy(samples, getter) {
@@ -18,6 +19,8 @@ export function summarizeSamples(samples, { trackCount, volumeCount, bytes } = {
   const covered = samples.filter((s) => s.stationId);
   const maxDbz = peakBy(samples, (s) => s.dbz);
   const maxNearbyDbz = peakBy(samples, (s) => s.nearbyDbz);
+  const maxComposite = peakBy(samples, (s) => s.compositeDbz);
+  const maxNearbyComposite = peakBy(samples, (s) => s.nearbyCompositeDbz);
   const maxVr = peakBy(samples, (s) => Math.abs(s.vrMs));
   const maxNearbyVr = peakBy(samples, (s) => Math.abs(s.nearbyVrMs));
   const maxRadial = peakBy(samples, (s) => s.radialShearS);
@@ -37,6 +40,11 @@ export function summarizeSamples(samples, { trackCount, volumeCount, bytes } = {
     lowConfidenceCount: lowConf,
     maxDbz,
     maxNearbyDbz,
+    maxCompositeDbz: maxComposite && {
+      ...maxComposite,
+      sample: compositeView(maxComposite.sample),
+    },
+    maxNearbyCompositeDbz: maxNearbyComposite,
     maxVr: maxVr && {
       ...maxVr,
       kt: Math.abs(maxVr.sample.vrMs) * MS_TO_KT,

@@ -6,12 +6,12 @@ describe("summarizeSamples", () => {
     const samples = [
       {
         timeMs: 1, lat: 40, lon: -74, stationId: "KOKX",
-        dbz: 10, nearbyDbz: 12, vrMs: 5, nearbyVrMs: 6,
+        dbz: 10, nearbyDbz: 12, compositeDbz: 41, nearbyCompositeDbz: 44, vrMs: 5, nearbyVrMs: 6,
         horizShearS: 0.001, azShearS: 0.001, vertShearS: 0.008, radialShearS: 0.0005,
       },
       {
         timeMs: 2, lat: 39, lon: -84, stationId: "KILN",
-        dbz: 20, nearbyDbz: 22, vrMs: -15, nearbyVrMs: -16,
+        dbz: 20, nearbyDbz: 22, compositeDbz: 25, nearbyCompositeDbz: 28, vrMs: -15, nearbyVrMs: -16,
         horizShearS: 0.004, azShearS: 0.004, vertShearS: 0.001, radialShearS: 0.0008,
       },
     ];
@@ -20,5 +20,8 @@ describe("summarizeSamples", () => {
     expect(summary.maxHorizShear.ktPerKm).toBeGreaterThan(0);
     expect(summary.maxVertShear.sample.stationId).toBe("KOKX");
     expect(summary.maxVertShear.ktPer1000Ft).toBeGreaterThan(0);
+    expect(summary.maxDbz.sample.stationId).toBe("KILN");
+    expect(summary.maxCompositeDbz.sample.stationId).toBe("KOKX");
+    expect(summary.maxCompositeDbz.value).toBe(41);
   });
 });

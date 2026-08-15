@@ -1,3 +1,4 @@
+import { compositeView } from "../analysis/sample.js";
 import { MS_TO_KT } from "../analysis/shear.js";
 
 export function nearestSampleByX(samples, x, width) {
@@ -71,12 +72,14 @@ function drawChart(el, { title, unit, samples, selected, getter, minY, maxY, col
 
 export function renderSeries(root, samples, selected, onSelect) {
   const dbzEl = root.querySelector("[data-series=dbz]");
+  const compEl = root.querySelector("[data-series=composite]");
   const velEl = root.querySelector("[data-series=vel]");
   if (!dbzEl || !velEl) return;
   const list = samples || [];
   if (list.length < 2) {
     dbzEl.innerHTML = "";
     velEl.innerHTML = "";
+    if (compEl) compEl.innerHTML = "";
     return;
   }
   drawChart(dbzEl, {
@@ -90,6 +93,19 @@ export function renderSeries(root, samples, selected, onSelect) {
     color: "#3ee0b2",
     onSelect,
   });
+  if (compEl) {
+    drawChart(compEl, {
+      title: "Composite reflectivity",
+      unit: "dBZ",
+      samples: list,
+      selected,
+      getter: (s) => s.compositeDbz,
+      minY: 0,
+      maxY: 75,
+      color: "#f0b429",
+      onSelect: (sample) => onSelect?.(compositeView(sample), { product: "reflectivity", zoom: true }),
+    });
+  }
   drawChart(velEl, {
     title: "Radial velocity",
     unit: "kt",

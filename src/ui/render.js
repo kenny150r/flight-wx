@@ -12,7 +12,7 @@ function fmtTime(ms) {
   return new Date(ms).toISOString().replace(".000Z", "Z");
 }
 
-function peakMeta(peak) {
+function peakMeta(peak, { tiltLabel = "closest tilt" } = {}) {
   if (!peak?.sample) return "No sample";
   const s = peak.sample;
   const tilt = Number.isFinite(s.elevation) ? `${s.elevation.toFixed(1)}°` : "—";
@@ -20,7 +20,7 @@ function peakMeta(peak) {
   return [
     fmtTime(s.timeMs),
     formatFlightState(s, { coords: true }),
-    [s.stationId, `closest tilt ${tilt}`, beam].filter(Boolean).join(" · "),
+    [s.stationId, `${tiltLabel} ${tilt}`, beam].filter(Boolean).join(" · "),
   ].filter(Boolean).join("\n");
 }
 
@@ -56,14 +56,21 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   root.hidden = false;
   const maxDbz = summary.maxDbz?.value;
   const nearbyDbz = summary.maxNearbyDbz?.value;
+  const maxComp = summary.maxCompositeDbz?.value;
+  const nearbyComp = summary.maxNearbyCompositeDbz?.value;
   const vrKt = summary.maxVr?.kt;
   const nearbyVr = summary.maxNearbyVr?.kt;
   const horiz = summary.maxHorizShear || summary.maxAzShear;
   const vert = summary.maxVertShear;
 
   root.querySelector("[data-card=dbz] .metric-value").textContent = fmt(maxDbz, 1);
-  root.querySelector("[data-card=dbz] .metric-sub").textContent = `Nearby max ${fmt(nearbyDbz, 1)} dBZ`;
+  root.querySelector("[data-card=dbz] .metric-sub").textContent = `Closest beam · nearby ${fmt(nearbyDbz, 1)} dBZ`;
   root.querySelector("[data-card=dbz] .metric-meta").textContent = peakMeta(summary.maxDbz);
+
+  root.querySelector("[data-card=composite] .metric-value").textContent = fmt(maxComp, 1);
+  root.querySelector("[data-card=composite] .metric-sub").textContent = `Column max · nearby ${fmt(nearbyComp, 1)} dBZ`;
+  root.querySelector("[data-card=composite] .metric-meta").textContent =
+    peakMeta(summary.maxCompositeDbz, { tiltLabel: "composite tilt" });
 
   root.querySelector("[data-card=vel] .metric-value").textContent = fmt(vrKt, 0);
   root.querySelector("[data-card=vel] .metric-sub").textContent = `Nearby max ${fmt(nearbyVr, 0)} kt radial`;
@@ -88,12 +95,13 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (summary.strideSec && summary.strideSec > 60) notes.push(`Stride increased to ${summary.strideSec}s to stay under the volume budget.`);
   if (summary.lowConfidenceCount) notes.push(`${summary.lowConfidenceCount} low-confidence samples (beam miss or missing gate).`);
   if (meta?.notes?.length) notes.push(...meta.notes);
-  notes.push("Each point uses the tilt whose 4/3-earth beam height is closest to the aircraft. Play flight to step through those scans, or click a peak card to zoom to that event.");
+  notes.push("Max reflectivity is the closest-beam gate at flight level. Composite is the strongest gate in the column (any tilt) at that lat/lon. Click a peak card to zoom to that event.");
   notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only.");
   root.querySelector("[data-notes]").textContent = notes.join("\n");
 
   const cardMap = {
     dbz: { sample: summary.maxDbz?.sample, product: "reflectivity" },
+    composite: { sample: summary.maxCompositeDbz?.sample, product: "reflectivity" },
     vel: { sample: summary.maxVr?.sample, product: "velocity" },
     hshear: { sample: horiz?.sample, product: "velocity" },
     vshear: { sample: vert?.sample, product: "velocity" },
@@ -118,6 +126,7 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
       <td>${fmtTime(s.timeMs)}</td>
       <td>${s.stationId || "—"}</td>
       <td>${fmt(s.dbz, 1)}</td>
+      <td>${fmt(s.compositeDbz, 1)}</td>
       <td>${fmt(Number.isFinite(s.vrMs) ? Math.abs(s.vrMs) * MS_TO_KT : NaN, 0)}</td>
       <td>${fmt(s.horizShearS ?? s.azShearS, 4)}</td>
       <td>${fmt(s.vertShearS, 4)}</td>
@@ -134,7 +143,8 @@ export function updateRadarHud(el, { sample, product, loading, error } = {}) {
     return;
   }
   el.hidden = false;
-  const tilt = Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° closest beam` : "tilt n/a";
+  const tiltKind = sample?.tiltRole === "composite" ? "composite" : "closest beam";
+  const tilt = Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° ${tiltKind}` : "tilt n/a";
   const when = sample ? new Date(sample.timeMs).toISOString().replace(".000Z", "Z") : "";
   const title = loading
     ? (loading.text || "Loading radar…")
@@ -156,6 +166,7 @@ export function highlightReportSelection(root, summary, selected) {
   if (!root || !summary) return;
   const cardMap = {
     dbz: summary.maxDbz?.sample,
+    composite: summary.maxCompositeDbz?.sample,
     vel: summary.maxVr?.sample,
     hshear: (summary.maxHorizShear || summary.maxAzShear)?.sample,
     vshear: summary.maxVertShear?.sample,

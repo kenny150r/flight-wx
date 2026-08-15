@@ -58,6 +58,12 @@
           <div class="metric-sub"></div>
           <div class="metric-meta"></div>
         </article>
+        <article class="card" data-card="composite">
+          <h3>Max composite reflectivity</h3>
+          <div><span class="metric-value">—</span><span class="metric-unit">dBZ</span></div>
+          <div class="metric-sub"></div>
+          <div class="metric-meta"></div>
+        </article>
         <article class="card" data-card="vel">
           <h3>Max |radial velocity|</h3>
           <div><span class="metric-value">—</span><span class="metric-unit">kt</span></div>
@@ -82,13 +88,14 @@
         <span id="play-status" class="play-status">Steps through each station’s closest-beam reflectivity</span>
       </div>
       <div class="series" data-series="dbz"></div>
+      <div class="series" data-series="composite"></div>
       <div class="series" data-series="vel"></div>
       <p class="notes" data-notes></p>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>UTC</th><th>Radar</th><th>dBZ</th><th>|Vr| kt</th><th>H s⁻¹</th><th>V s⁻¹</th><th></th>
+              <th>UTC</th><th>Radar</th><th>dBZ</th><th>Comp</th><th>|Vr| kt</th><th>H s⁻¹</th><th>V s⁻¹</th><th></th>
             </tr>
           </thead>
           <tbody data-table></tbody>

@@ -35,8 +35,9 @@ An optional Mode-S hex helps historical [readsb globe-history](https://github.co
 
 ## What the numbers mean
 
-- **Max dBZ** — reflectivity at the aircraft, using the tilt whose 4/3-earth beam is closest to altitude. Nearby max is the strongest gate within 5 km.
-- **Time series** — dBZ and signed radial velocity along the flight. Click a peak, chart, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind) at the closest-beam tilt. The popup and radar HUD show flight state at that point (flight level, heading, ground speed, vertical speed).
+- **Max reflectivity** — dBZ at the aircraft, using the tilt whose 4/3-earth beam is closest to altitude. Nearby max is the strongest gate within 5 km on that tilt.
+- **Max composite reflectivity** — strongest dBZ in the column at that lat/lon (max over all tilts). Click the card to load the tilt that held the peak.
+- **Time series** — closest-beam dBZ, composite dBZ, and signed radial velocity along the flight. Click a peak, chart, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind). The popup and radar HUD show flight state at that point (flight level, heading, ground speed, vertical speed).
 - **Play flight** — steps through the path in time, moving the aircraft and loading a new reflectivity overlay whenever the station, volume, or closest-beam tilt changes.
 - **Max |Vr|** — NEXRAD radial velocity (toward/away from the radar), not true wind. No dealiasing.
 - **Max horizontal shear** — strongest azimuthal (gate-to-gate) radial-velocity shear in a ~2.5 km window, in kt/km and s⁻¹. Click the card to zoom to that event and load velocity.

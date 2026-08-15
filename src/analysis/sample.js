@@ -7,6 +7,38 @@ import { computeShear, computeVerticalShear, verticalFromRadial } from "./shear.
 export const NEIGHBOR_M = 5000;
 export { samplePolar, neighborhoodMaxAbs } from "./polar.js";
 
+export function sampleCompositeReflectivity(sweeps, azDeg, rangeM, neighborM = NEIGHBOR_M) {
+  let compositeDbz = NaN;
+  let compositeElevation = NaN;
+  let nearbyCompositeDbz = NaN;
+  for (const sweep of sweeps || []) {
+    const ref = sweep?.reflectivity;
+    if (!ref) continue;
+    const dbz = samplePolar(ref, azDeg, rangeM);
+    if (Number.isFinite(dbz) && (!Number.isFinite(compositeDbz) || dbz > compositeDbz)) {
+      compositeDbz = dbz;
+      compositeElevation = sweep.elevation;
+    }
+    if (neighborM > 0) {
+      const nearby = neighborhoodMaxAbs(ref, azDeg, rangeM, neighborM, false);
+      if (Number.isFinite(nearby) && (!Number.isFinite(nearbyCompositeDbz) || nearby > nearbyCompositeDbz)) {
+        nearbyCompositeDbz = nearby;
+      }
+    }
+  }
+  return { compositeDbz, compositeElevation, nearbyCompositeDbz };
+}
+
+export function compositeView(sample) {
+  if (!sample) return sample;
+  return {
+    ...sample,
+    elevation: Number.isFinite(sample.compositeElevation) ? sample.compositeElevation : sample.elevation,
+    dbz: Number.isFinite(sample.compositeDbz) ? sample.compositeDbz : sample.dbz,
+    tiltRole: "composite",
+  };
+}
+
 export function sampleExtractedVolume(extracted, points) {
   const { lat, lon, altM: radarAltM, sweeps } = extracted;
   const samples = [];
@@ -23,6 +55,7 @@ export function sampleExtractedVolume(extracted, points) {
     const vrMs = samplePolar(vel, azDeg, rangeM);
     const nearbyDbz = neighborhoodMaxAbs(ref, azDeg, rangeM, NEIGHBOR_M, false);
     const nearbyVrMs = neighborhoodMaxAbs(vel, azDeg, rangeM, NEIGHBOR_M, true);
+    const composite = sampleCompositeReflectivity(sweeps, azDeg, rangeM);
     const shear = computeShear(vel, azDeg, rangeM);
     const vert = computeVerticalShear(sweeps, azDeg, rangeM, radarAltM, aircraftAltM);
     const vertShearS = Number.isFinite(vert.verticalS)
@@ -49,6 +82,9 @@ export function sampleExtractedVolume(extracted, points) {
       beamErrorFt: Number.isFinite(tilt.errorM) ? altMToFt(tilt.errorM) : null,
       dbz,
       nearbyDbz: Number.isFinite(nearbyDbz) ? nearbyDbz : NaN,
+      compositeDbz: composite.compositeDbz,
+      compositeElevation: composite.compositeElevation,
+      nearbyCompositeDbz: composite.nearbyCompositeDbz,
       vrMs,
       nearbyVrMs: Number.isFinite(nearbyVrMs) ? nearbyVrMs : NaN,
       radialShearS: shear.radialS,

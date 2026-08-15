@@ -54,6 +54,31 @@ describe("sampleExtractedVolume", () => {
     expect(samples[0].vrMs).toBeCloseTo(12, 5);
     expect(samples[0].stationId).toBe("KTLX");
     expect(samples[0].horizShearS).toBe(samples[0].azShearS);
+    expect(samples[0].compositeDbz).toBeCloseTo(28, 5);
+    expect(samples[0].compositeElevation).toBe(2.4);
+  });
+
+  it("takes composite reflectivity from the strongest tilt in the column", () => {
+    const extracted = {
+      lat: 35,
+      lon: -97,
+      altM: 300,
+      stationId: "KTLX",
+      sweeps: [
+        { elevation: 0.5, reflectivity: grid({ value: 22, numGates: 80 }), velocity: grid({ value: 5, numGates: 80 }) },
+        { elevation: 6.4, reflectivity: grid({ value: 48, numGates: 80 }), velocity: grid({ value: 5, numGates: 80 }) },
+      ],
+    };
+    const samples = sampleExtractedVolume(extracted, [{
+      timeMs: Date.UTC(2013, 4, 20, 19, 51, 0),
+      lat: 35,
+      lon: -96.5,
+      altFt: 2000,
+      station: { id: "KTLX" },
+    }]);
+    expect(samples[0].dbz).toBeCloseTo(22, 5);
+    expect(samples[0].compositeDbz).toBeCloseTo(48, 5);
+    expect(samples[0].compositeElevation).toBe(6.4);
   });
 
   it("uses neighboring tilts for vertical shear", () => {

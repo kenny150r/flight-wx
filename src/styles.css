@@ -149,7 +149,12 @@ button.example {
 
 .cards {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.card[data-card="vel"] {
+  grid-column: 1 / -1;
 }
 
 .card {
@@ -179,7 +184,7 @@ tr.is-selected {
 }
 
 .metric-value {
-  font: 700 2rem/1 "IBM Plex Mono", ui-monospace, monospace;
+  font: 700 1.7rem/1 "IBM Plex Mono", ui-monospace, monospace;
 }
 
 .metric-unit {
