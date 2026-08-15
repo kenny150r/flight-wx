@@ -358,7 +358,9 @@ export function boot() {
           outside_conus: "Track is outside CONUS NEXRAD coverage.",
           list_failed: "Could not list NEXRAD scans. Check your connection and try Analyze again.",
           no_scans: "No Level II scans were found near those times.",
-          ingest_failed: "Radar volumes were found but could not be downloaded or decoded. Try Analyze again.",
+          ingest_failed: summary.emptyDetail
+            ? `Radar volumes downloaded but decode failed: ${summary.emptyDetail}`
+            : "Radar volumes were found but could not be decoded. Try Analyze again.",
         };
         setStatus(status, emptyText[summary.emptyReason] || emptyText.no_scans, "error");
         return;

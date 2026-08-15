@@ -33,6 +33,7 @@ export async function ingestVolumes(volumes, {
   let activeDownloads = 0;
   let sampled = 0;
   let bytes = 0;
+  let firstError = null;
   const out = new Array(volumes.length);
 
   const wake = () => {
@@ -68,6 +69,7 @@ export async function ingestVolumes(volumes, {
         bytes += raw.byteLength;
         queue.push({ idx, volume, raw });
       } catch (error) {
+        if (!firstError) firstError = error;
         queue.push({ idx, volume, error });
       } finally {
         activeDownloads -= 1;
@@ -111,7 +113,8 @@ export async function ingestVolumes(volumes, {
             dateClean: item.volume.dateClean,
             timeClean: item.volume.timeClean,
           }));
-        } catch {
+        } catch (error) {
+          if (!firstError) firstError = error;
           out[item.idx] = [];
         }
       }
@@ -138,7 +141,7 @@ export async function ingestVolumes(volumes, {
   wake();
   wakeSpace();
   await Promise.all(samplers);
-  return { chunks: out.filter(Boolean), bytes };
+  return { chunks: out.filter(Boolean), bytes, firstError };
 }
 
 export async function analyzeTrack(points, { signal, onProgress } = {}) {
@@ -174,7 +177,7 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
     return summary;
   }
 
-  const { chunks, bytes } = await ingestVolumes(plan.volumes, { signal, onProgress });
+  const { chunks, bytes, firstError } = await ingestVolumes(plan.volumes, { signal, onProgress });
   const samples = chunks.flat();
   const summary = summarizeSamples(samples, {
     trackCount: assigned.length,
@@ -184,6 +187,9 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
   summary.strideSec = stride;
   summary.assigned = assigned;
   summary.uncoveredCount = assigned.length - covered;
-  if (!samples.length) summary.emptyReason = "ingest_failed";
+  if (!samples.length) {
+    summary.emptyReason = "ingest_failed";
+    summary.emptyDetail = firstError?.message || "";
+  }
   return summary;
 }

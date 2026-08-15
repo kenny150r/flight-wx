@@ -1,4 +1,6 @@
 import { defaultConcurrency } from "../../analysis/pool.js";
+import SampleWorker from "./sampleWorker.js?worker";
+import L2Worker from "./l2Worker.js?worker";
 
 const DECODE_TIMEOUT_MS = 180000;
 let nextId = 1;
@@ -36,8 +38,8 @@ function bindWorker(worker) {
 }
 
 class WorkerPool {
-  constructor(url, size) {
-    this.url = url;
+  constructor(WorkerCtor, size) {
+    this.WorkerCtor = WorkerCtor;
     this.size = Math.max(1, size);
     this.workers = [];
     this.idle = [];
@@ -46,7 +48,7 @@ class WorkerPool {
   }
 
   _spawn() {
-    const worker = new Worker(this.url, { type: "module" });
+    const worker = new this.WorkerCtor();
     bindWorker(worker);
     this.workers.push(worker);
     return worker;
@@ -82,14 +84,8 @@ class WorkerPool {
   }
 }
 
-const samplePool = new WorkerPool(
-  new URL("./sampleWorker.js", import.meta.url),
-  defaultConcurrency("decode"),
-);
-const l2Pool = new WorkerPool(
-  new URL("./l2Worker.js", import.meta.url),
-  defaultConcurrency("decode"),
-);
+const samplePool = new WorkerPool(SampleWorker, defaultConcurrency("decode"));
+const l2Pool = new WorkerPool(L2Worker, defaultConcurrency("decode"));
 
 function callWorker(worker, message, transfer = [], onProgress) {
   const id = nextId++;
