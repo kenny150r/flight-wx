@@ -54,6 +54,32 @@ export function findClosestByTime(items, targetTime, maxDeltaSec = 600) {
   return null;
 }
 
+export function scanTimeMs(dateClean, timeHms) {
+  const y = parseInt(String(dateClean || "").slice(0, 4), 10);
+  const m = parseInt(String(dateClean || "").slice(4, 6), 10) - 1;
+  const d = parseInt(String(dateClean || "").slice(6, 8), 10);
+  const [hh, mm, ss] = String(timeHms || "").split(":").map((part) => parseInt(part, 10) || 0);
+  if (![y, m, d].every(Number.isFinite)) return NaN;
+  return Date.UTC(y, m, d, hh, mm, ss);
+}
+
+export function findClosestByTimeMs(items, dateClean, targetMs, maxDeltaSec = 600) {
+  if (!items.length || !Number.isFinite(targetMs)) return null;
+  let best = null;
+  let bestDelta = Infinity;
+  for (const item of items) {
+    const t = scanTimeMs(dateClean, item.time);
+    if (!Number.isFinite(t)) continue;
+    const delta = Math.abs(t - targetMs) / 1000;
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      best = item;
+    }
+  }
+  if (best && bestDelta <= maxDeltaSec) return best;
+  return null;
+}
+
 export function listAvailableElevations(sweeps) {
   const rounded = sweeps
     .map((s) => s.elevation)

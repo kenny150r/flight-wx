@@ -19,6 +19,31 @@ describe("planVolumes", () => {
     ];
     const plan = await planVolumes(assigned, { listScans });
     expect(plan.volumes.length).toBe(2);
+    expect(plan.volumes.map((v) => v.dateClean).sort()).toEqual(["20250717", "20250717"]);
     expect(max).toBeGreaterThan(1);
+  });
+
+  it("does not treat yesterday's same clock time as the matching scan", async () => {
+    const listScans = async (id, date) => ({
+      scans: [{ time: "12:56:20", key: `${id}-${date}`, size: 1 }],
+    });
+    const plan = await planVolumes([
+      { timeMs: Date.UTC(2025, 6, 17, 12, 56, 0), station: { id: "KOKX" }, lat: 40, lon: -74 },
+    ], { listScans });
+    expect(plan.volumes).toHaveLength(1);
+    expect(plan.volumes[0].dateClean).toBe("20250717");
+    expect(plan.volumes[0].key).toBe("KOKX-20250717");
+  });
+
+  it("can use the previous day across midnight", async () => {
+    const listScans = async (id, date) => {
+      if (date === "20250717") return { scans: [] };
+      return { scans: [{ time: "23:58:00", key: `${id}-${date}`, size: 1 }] };
+    };
+    const plan = await planVolumes([
+      { timeMs: Date.UTC(2025, 6, 17, 0, 2, 0), station: { id: "KOKX" }, lat: 40, lon: -74 },
+    ], { listScans });
+    expect(plan.volumes[0].dateClean).toBe("20250716");
+    expect(plan.volumes[0].key).toBe("KOKX-20250716");
   });
 });

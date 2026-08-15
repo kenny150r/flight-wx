@@ -15,6 +15,7 @@ export async function ingestVolumes(volumes, {
   sample,
   downloadLimit = defaultConcurrency("download"),
   sampleLimit = defaultConcurrency("decode"),
+  maxQueue = Math.max(2, downloadLimit + sampleLimit),
 } = {}) {
   const downloadVolumeFn = download || ((volume) => downloadVolume(L2_BUCKET, volume.key, { signal }));
   const sampleVolumeFn = sample || ((raw, volume, onProg) => sampleL2InWorker(raw, {
@@ -26,8 +27,10 @@ export async function ingestVolumes(volumes, {
   }, onProg));
   const queue = [];
   const waiters = [];
+  const spaceWaiters = [];
   let nextDownload = 0;
   let downloadsFinished = 0;
+  let activeDownloads = 0;
   let sampled = 0;
   let bytes = 0;
   const out = new Array(volumes.length);
@@ -35,11 +38,24 @@ export async function ingestVolumes(volumes, {
   const wake = () => {
     while (waiters.length) waiters.shift()();
   };
+  const wakeSpace = () => {
+    while (spaceWaiters.length) spaceWaiters.shift()();
+  };
 
   async function downloader() {
-    while (nextDownload < volumes.length) {
+    for (;;) {
+      if (nextDownload >= volumes.length) return;
+      if (queue.length + activeDownloads >= maxQueue) {
+        await new Promise((resolve) => {
+          if (queue.length + activeDownloads < maxQueue || nextDownload >= volumes.length) resolve();
+          else spaceWaiters.push(resolve);
+        });
+        continue;
+      }
       const idx = nextDownload++;
+      if (idx >= volumes.length) return;
       const volume = volumes[idx];
+      activeDownloads += 1;
       onProgress?.({
         phase: "download",
         text: `Downloading ${volume.station.id} (${Math.min(downloadsFinished + 1, volumes.length)}/${volumes.length})…`,
@@ -53,6 +69,8 @@ export async function ingestVolumes(volumes, {
         queue.push({ idx, volume, raw });
       } catch (error) {
         queue.push({ idx, volume, error });
+      } finally {
+        activeDownloads -= 1;
       }
       downloadsFinished += 1;
       wake();
@@ -70,6 +88,7 @@ export async function ingestVolumes(volumes, {
         continue;
       }
       const item = queue.shift();
+      wakeSpace();
       if (item.error) {
         out[item.idx] = [];
       } else {
@@ -117,6 +136,7 @@ export async function ingestVolumes(volumes, {
   );
   await Promise.all(downloaders);
   wake();
+  wakeSpace();
   await Promise.all(samplers);
   return { chunks: out.filter(Boolean), bytes };
 }
@@ -140,11 +160,18 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
 
   const covered = assigned.filter((p) => p.station).length;
   if (!plan.volumes.length) {
-    return summarizeSamples([], {
+    const summary = summarizeSamples([], {
       trackCount: assigned.length,
       volumeCount: 0,
       bytes: 0,
     });
+    summary.strideSec = stride;
+    summary.assigned = assigned;
+    summary.uncoveredCount = assigned.length - covered;
+    summary.emptyReason = covered === 0
+      ? "outside_conus"
+      : (plan.listErrors ? "list_failed" : "no_scans");
+    return summary;
   }
 
   const { chunks, bytes } = await ingestVolumes(plan.volumes, { signal, onProgress });
@@ -157,5 +184,6 @@ export async function analyzeTrack(points, { signal, onProgress } = {}) {
   summary.strideSec = stride;
   summary.assigned = assigned;
   summary.uncoveredCount = assigned.length - covered;
+  if (!samples.length) summary.emptyReason = "ingest_failed";
   return summary;
 }

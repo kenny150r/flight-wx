@@ -2,9 +2,9 @@ export function defaultConcurrency(kind = "decode") {
   const cores = typeof navigator !== "undefined" && navigator.hardwareConcurrency
     ? navigator.hardwareConcurrency
     : 4;
-  if (kind === "download") return Math.min(6, Math.max(3, cores));
-  if (kind === "list") return Math.min(8, Math.max(4, cores));
-  return Math.min(4, Math.max(2, Math.floor(cores / 2) || 2));
+  if (kind === "download") return Math.min(3, Math.max(2, cores));
+  if (kind === "list") return Math.min(4, Math.max(3, cores));
+  return 2;
 }
 
 export async function mapPool(items, limit, fn) {

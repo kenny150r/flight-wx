@@ -26,8 +26,8 @@ describe("mapPool", () => {
   });
 
   it("picks useful default limits", () => {
-    expect(defaultConcurrency("download")).toBeGreaterThanOrEqual(3);
+    expect(defaultConcurrency("download")).toBeGreaterThanOrEqual(2);
     expect(defaultConcurrency("decode")).toBeGreaterThanOrEqual(2);
-    expect(defaultConcurrency("list")).toBeGreaterThanOrEqual(4);
+    expect(defaultConcurrency("list")).toBeGreaterThanOrEqual(3);
   });
 });

@@ -56,4 +56,28 @@ describe("ingestVolumes", () => {
       expect.objectContaining({ stationId: "KDIX", s3Key: "key-KDIX" }),
     ]);
   });
+
+  it("limits queued downloads while sampling is busy", async () => {
+    let started = 0;
+    let finished = 0;
+    let maxHeld = 0;
+    const volumes = ["KOKX", "KDIX", "KDOX", "KLWX", "KCCX"].map(volume);
+    await ingestVolumes(volumes, {
+      downloadLimit: 4,
+      sampleLimit: 1,
+      maxQueue: 2,
+      download: async () => {
+        started += 1;
+        maxHeld = Math.max(maxHeld, started - finished);
+        await new Promise((resolve) => setTimeout(resolve, 8));
+        return new Uint8Array([1]);
+      },
+      sample: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 25));
+        finished += 1;
+        return { samples: [{ stationId: "X" }] };
+      },
+    });
+    expect(maxHeld).toBeLessThanOrEqual(3);
+  });
 });
