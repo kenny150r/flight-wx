@@ -1,0 +1,5 @@
+node_modules
+dist
+public/bz2.wasm
+.DS_Store
+*.log

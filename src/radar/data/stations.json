@@ -1,0 +1,1415 @@
+[
+  {
+    "id": "KABR",
+    "name": "Aberdeen",
+    "state": "SD",
+    "lat": 45.456,
+    "lon": -98.413,
+    "label": "KABR - Aberdeen, SD",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KABX",
+    "name": "Albuquerque",
+    "state": "NM",
+    "lat": 35.15,
+    "lon": -106.824,
+    "label": "KABX - Albuquerque, NM",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KAKQ",
+    "name": "Wakefield",
+    "state": "VA",
+    "lat": 36.984,
+    "lon": -77.008,
+    "label": "KAKQ - Wakefield, VA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KAMA",
+    "name": "Amarillo",
+    "state": "TX",
+    "lat": 35.233,
+    "lon": -101.709,
+    "label": "KAMA - Amarillo, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KAMX",
+    "name": "Miami",
+    "state": "FL",
+    "lat": 25.611,
+    "lon": -80.413,
+    "label": "KAMX - Miami, FL",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KAPX",
+    "name": "Gaylord",
+    "state": "MI",
+    "lat": 44.907,
+    "lon": -84.72,
+    "label": "KAPX - Gaylord, MI",
+    "timezone": "America/Detroit"
+  },
+  {
+    "id": "KARX",
+    "name": "La Crosse",
+    "state": "WI",
+    "lat": 43.823,
+    "lon": -91.191,
+    "label": "KARX - La Crosse, WI",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KATX",
+    "name": "Seattle/Tacoma",
+    "state": "WA",
+    "lat": 48.195,
+    "lon": -122.496,
+    "label": "KATX - Seattle/Tacoma, WA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KBBX",
+    "name": "Beale AFB",
+    "state": "CA",
+    "lat": 39.496,
+    "lon": -121.632,
+    "label": "KBBX - Beale AFB, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KBGM",
+    "name": "Binghamton",
+    "state": "NY",
+    "lat": 42.2,
+    "lon": -75.985,
+    "label": "KBGM - Binghamton, NY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KBHX",
+    "name": "Eureka",
+    "state": "CA",
+    "lat": 40.499,
+    "lon": -124.292,
+    "label": "KBHX - Eureka, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KBIS",
+    "name": "Bismarck",
+    "state": "ND",
+    "lat": 46.771,
+    "lon": -100.76,
+    "label": "KBIS - Bismarck, ND",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KBLX",
+    "name": "Billings",
+    "state": "MT",
+    "lat": 45.854,
+    "lon": -108.607,
+    "label": "KBLX - Billings, MT",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KBMX",
+    "name": "Birmingham",
+    "state": "AL",
+    "lat": 33.172,
+    "lon": -86.77,
+    "label": "KBMX - Birmingham, AL",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KBOX",
+    "name": "Boston",
+    "state": "MA",
+    "lat": 41.956,
+    "lon": -71.137,
+    "label": "KBOX - Boston, MA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KBRO",
+    "name": "Brownsville",
+    "state": "TX",
+    "lat": 25.916,
+    "lon": -97.419,
+    "label": "KBRO - Brownsville, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KBUF",
+    "name": "Buffalo",
+    "state": "NY",
+    "lat": 42.949,
+    "lon": -78.737,
+    "label": "KBUF - Buffalo, NY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KBYX",
+    "name": "Key West",
+    "state": "FL",
+    "lat": 24.598,
+    "lon": -81.703,
+    "label": "KBYX - Key West, FL",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KCAE",
+    "name": "Columbia",
+    "state": "SC",
+    "lat": 33.949,
+    "lon": -81.119,
+    "label": "KCAE - Columbia, SC",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KCBW",
+    "name": "Caribou",
+    "state": "ME",
+    "lat": 46.039,
+    "lon": -67.806,
+    "label": "KCBW - Caribou, ME",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KCBX",
+    "name": "Boise",
+    "state": "ID",
+    "lat": 43.491,
+    "lon": -116.236,
+    "label": "KCBX - Boise, ID",
+    "timezone": "America/Boise"
+  },
+  {
+    "id": "KCCX",
+    "name": "State College",
+    "state": "PA",
+    "lat": 40.923,
+    "lon": -78.004,
+    "label": "KCCX - State College, PA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KCLE",
+    "name": "Cleveland",
+    "state": "OH",
+    "lat": 41.413,
+    "lon": -81.86,
+    "label": "KCLE - Cleveland, OH",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KCLX",
+    "name": "Charleston",
+    "state": "SC",
+    "lat": 32.656,
+    "lon": -81.042,
+    "label": "KCLX - Charleston, SC",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KCRP",
+    "name": "Corpus Christi",
+    "state": "TX",
+    "lat": 27.784,
+    "lon": -97.511,
+    "label": "KCRP - Corpus Christi, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KCXX",
+    "name": "Burlington",
+    "state": "VT",
+    "lat": 44.511,
+    "lon": -73.166,
+    "label": "KCXX - Burlington, VT",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KCYS",
+    "name": "Cheyenne",
+    "state": "WY",
+    "lat": 41.152,
+    "lon": -104.806,
+    "label": "KCYS - Cheyenne, WY",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KDAX",
+    "name": "Sacramento",
+    "state": "CA",
+    "lat": 38.501,
+    "lon": -121.678,
+    "label": "KDAX - Sacramento, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KDDC",
+    "name": "Dodge City",
+    "state": "KS",
+    "lat": 37.761,
+    "lon": -99.969,
+    "label": "KDDC - Dodge City, KS",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KDFX",
+    "name": "Laughlin AFB",
+    "state": "TX",
+    "lat": 29.273,
+    "lon": -100.28,
+    "label": "KDFX - Laughlin AFB, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KDGX",
+    "name": "Jackson",
+    "state": "MS",
+    "lat": 32.28,
+    "lon": -89.984,
+    "label": "KDGX - Jackson, MS",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KDIX",
+    "name": "Philadelphia",
+    "state": "NJ",
+    "lat": 39.947,
+    "lon": -74.411,
+    "label": "KDIX - Philadelphia, NJ",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KDLH",
+    "name": "Duluth",
+    "state": "MN",
+    "lat": 46.837,
+    "lon": -92.21,
+    "label": "KDLH - Duluth, MN",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KDMX",
+    "name": "Des Moines",
+    "state": "IA",
+    "lat": 41.731,
+    "lon": -93.723,
+    "label": "KDMX - Des Moines, IA",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KDOX",
+    "name": "Dover AFB",
+    "state": "DE",
+    "lat": 38.826,
+    "lon": -75.44,
+    "label": "KDOX - Dover AFB, DE",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KDTX",
+    "name": "Detroit",
+    "state": "MI",
+    "lat": 42.7,
+    "lon": -83.472,
+    "label": "KDTX - Detroit, MI",
+    "timezone": "America/Detroit"
+  },
+  {
+    "id": "KDVN",
+    "name": "Davenport",
+    "state": "IA",
+    "lat": 41.612,
+    "lon": -90.581,
+    "label": "KDVN - Davenport, IA",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KDYX",
+    "name": "Dyess AFB",
+    "state": "TX",
+    "lat": 32.538,
+    "lon": -99.254,
+    "label": "KDYX - Dyess AFB, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KEAX",
+    "name": "Kansas City",
+    "state": "MO",
+    "lat": 38.81,
+    "lon": -94.264,
+    "label": "KEAX - Kansas City, MO",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KEMX",
+    "name": "Tucson",
+    "state": "AZ",
+    "lat": 31.894,
+    "lon": -110.63,
+    "label": "KEMX - Tucson, AZ",
+    "timezone": "America/Phoenix"
+  },
+  {
+    "id": "KENX",
+    "name": "Albany",
+    "state": "NY",
+    "lat": 42.586,
+    "lon": -74.064,
+    "label": "KENX - Albany, NY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KEOX",
+    "name": "Fort Rucker",
+    "state": "AL",
+    "lat": 31.46,
+    "lon": -85.459,
+    "label": "KEOX - Fort Rucker, AL",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KEPZ",
+    "name": "El Paso",
+    "state": "TX",
+    "lat": 31.873,
+    "lon": -106.698,
+    "label": "KEPZ - El Paso, TX",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KESX",
+    "name": "Las Vegas",
+    "state": "NV",
+    "lat": 35.701,
+    "lon": -114.892,
+    "label": "KESX - Las Vegas, NV",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KEVX",
+    "name": "Eglin AFB",
+    "state": "FL",
+    "lat": 30.565,
+    "lon": -85.921,
+    "label": "KEVX - Eglin AFB, FL",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KEWX",
+    "name": "San Antonio",
+    "state": "TX",
+    "lat": 29.704,
+    "lon": -98.029,
+    "label": "KEWX - San Antonio, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KEYX",
+    "name": "Edwards AFB",
+    "state": "CA",
+    "lat": 35.098,
+    "lon": -117.561,
+    "label": "KEYX - Edwards AFB, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KFCX",
+    "name": "Roanoke",
+    "state": "VA",
+    "lat": 37.024,
+    "lon": -80.274,
+    "label": "KFCX - Roanoke, VA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KFDR",
+    "name": "Frederick",
+    "state": "OK",
+    "lat": 34.362,
+    "lon": -98.976,
+    "label": "KFDR - Frederick, OK",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KFDX",
+    "name": "Cannon AFB",
+    "state": "NM",
+    "lat": 34.634,
+    "lon": -103.63,
+    "label": "KFDX - Cannon AFB, NM",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KFFC",
+    "name": "Atlanta",
+    "state": "GA",
+    "lat": 33.364,
+    "lon": -84.566,
+    "label": "KFFC - Atlanta, GA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KFSD",
+    "name": "Sioux Falls",
+    "state": "SD",
+    "lat": 43.588,
+    "lon": -96.729,
+    "label": "KFSD - Sioux Falls, SD",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KFSX",
+    "name": "Flagstaff",
+    "state": "AZ",
+    "lat": 34.574,
+    "lon": -111.198,
+    "label": "KFSX - Flagstaff, AZ",
+    "timezone": "America/Phoenix"
+  },
+  {
+    "id": "KFTG",
+    "name": "Denver",
+    "state": "CO",
+    "lat": 39.787,
+    "lon": -104.546,
+    "label": "KFTG - Denver, CO",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KFWS",
+    "name": "Dallas/Fort Worth",
+    "state": "TX",
+    "lat": 32.573,
+    "lon": -97.303,
+    "label": "KFWS - Dallas/Fort Worth, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KGGW",
+    "name": "Glasgow",
+    "state": "MT",
+    "lat": 48.206,
+    "lon": -106.625,
+    "label": "KGGW - Glasgow, MT",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KGJX",
+    "name": "Grand Junction",
+    "state": "CO",
+    "lat": 39.062,
+    "lon": -108.214,
+    "label": "KGJX - Grand Junction, CO",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KGLD",
+    "name": "Goodland",
+    "state": "KS",
+    "lat": 39.367,
+    "lon": -101.7,
+    "label": "KGLD - Goodland, KS",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KGRB",
+    "name": "Green Bay",
+    "state": "WI",
+    "lat": 44.499,
+    "lon": -88.111,
+    "label": "KGRB - Green Bay, WI",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KGRK",
+    "name": "Fort Hood",
+    "state": "TX",
+    "lat": 30.722,
+    "lon": -97.383,
+    "label": "KGRK - Fort Hood, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KGRR",
+    "name": "Grand Rapids",
+    "state": "MI",
+    "lat": 42.894,
+    "lon": -85.545,
+    "label": "KGRR - Grand Rapids, MI",
+    "timezone": "America/Detroit"
+  },
+  {
+    "id": "KGSP",
+    "name": "Greenville/Spartanburg",
+    "state": "SC",
+    "lat": 34.883,
+    "lon": -82.22,
+    "label": "KGSP - Greenville/Spartanburg, SC",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KGWX",
+    "name": "Columbus AFB",
+    "state": "MS",
+    "lat": 33.897,
+    "lon": -88.329,
+    "label": "KGWX - Columbus AFB, MS",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KGYX",
+    "name": "Portland",
+    "state": "ME",
+    "lat": 43.891,
+    "lon": -70.257,
+    "label": "KGYX - Portland, ME",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KHDX",
+    "name": "Holloman AFB",
+    "state": "NM",
+    "lat": 33.076,
+    "lon": -106.12,
+    "label": "KHDX - Holloman AFB, NM",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KHGX",
+    "name": "Houston/Galveston",
+    "state": "TX",
+    "lat": 29.472,
+    "lon": -95.079,
+    "label": "KHGX - Houston/Galveston, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KHNX",
+    "name": "San Joaquin Valley",
+    "state": "CA",
+    "lat": 36.314,
+    "lon": -119.632,
+    "label": "KHNX - San Joaquin Valley, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KHPX",
+    "name": "Fort Campbell",
+    "state": "KY",
+    "lat": 36.737,
+    "lon": -87.285,
+    "label": "KHPX - Fort Campbell, KY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KHTX",
+    "name": "Huntsville",
+    "state": "AL",
+    "lat": 34.931,
+    "lon": -86.084,
+    "label": "KHTX - Huntsville, AL",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KICT",
+    "name": "Wichita",
+    "state": "KS",
+    "lat": 37.655,
+    "lon": -97.443,
+    "label": "KICT - Wichita, KS",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KICX",
+    "name": "Cedar City",
+    "state": "UT",
+    "lat": 37.591,
+    "lon": -112.862,
+    "label": "KICX - Cedar City, UT",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KILN",
+    "name": "Cincinnati",
+    "state": "OH",
+    "lat": 39.42,
+    "lon": -83.822,
+    "label": "KILN - Cincinnati, OH",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KILX",
+    "name": "Lincoln",
+    "state": "IL",
+    "lat": 40.151,
+    "lon": -89.337,
+    "label": "KILX - Lincoln, IL",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KIND",
+    "name": "Indianapolis",
+    "state": "IN",
+    "lat": 39.708,
+    "lon": -86.28,
+    "label": "KIND - Indianapolis, IN",
+    "timezone": "America/Indiana/Indianapolis"
+  },
+  {
+    "id": "KINX",
+    "name": "Tulsa",
+    "state": "OK",
+    "lat": 36.175,
+    "lon": -95.564,
+    "label": "KINX - Tulsa, OK",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KIWA",
+    "name": "Phoenix",
+    "state": "AZ",
+    "lat": 33.289,
+    "lon": -111.67,
+    "label": "KIWA - Phoenix, AZ",
+    "timezone": "America/Phoenix"
+  },
+  {
+    "id": "KIWX",
+    "name": "Fort Wayne",
+    "state": "IN",
+    "lat": 41.359,
+    "lon": -85.7,
+    "label": "KIWX - Fort Wayne, IN",
+    "timezone": "America/Indiana/Indianapolis"
+  },
+  {
+    "id": "KJAX",
+    "name": "Jacksonville",
+    "state": "FL",
+    "lat": 30.485,
+    "lon": -81.702,
+    "label": "KJAX - Jacksonville, FL",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KJGX",
+    "name": "Robins AFB",
+    "state": "GA",
+    "lat": 32.675,
+    "lon": -83.351,
+    "label": "KJGX - Robins AFB, GA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KJKL",
+    "name": "Jackson",
+    "state": "KY",
+    "lat": 37.591,
+    "lon": -83.313,
+    "label": "KJKL - Jackson, KY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KLBB",
+    "name": "Lubbock",
+    "state": "TX",
+    "lat": 33.654,
+    "lon": -101.814,
+    "label": "KLBB - Lubbock, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KLCH",
+    "name": "Lake Charles",
+    "state": "LA",
+    "lat": 30.125,
+    "lon": -93.216,
+    "label": "KLCH - Lake Charles, LA",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KLIX",
+    "name": "New Orleans",
+    "state": "LA",
+    "lat": 30.337,
+    "lon": -89.826,
+    "label": "KLIX - New Orleans, LA",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KLNX",
+    "name": "North Platte",
+    "state": "NE",
+    "lat": 41.958,
+    "lon": -100.576,
+    "label": "KLNX - North Platte, NE",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KLOT",
+    "name": "Chicago",
+    "state": "IL",
+    "lat": 41.604,
+    "lon": -88.085,
+    "label": "KLOT - Chicago, IL",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KLRX",
+    "name": "Elko",
+    "state": "NV",
+    "lat": 40.74,
+    "lon": -116.803,
+    "label": "KLRX - Elko, NV",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KLSX",
+    "name": "St. Louis",
+    "state": "MO",
+    "lat": 38.699,
+    "lon": -90.683,
+    "label": "KLSX - St. Louis, MO",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KLTX",
+    "name": "Wilmington",
+    "state": "NC",
+    "lat": 33.989,
+    "lon": -78.429,
+    "label": "KLTX - Wilmington, NC",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KLVX",
+    "name": "Louisville",
+    "state": "KY",
+    "lat": 37.975,
+    "lon": -85.944,
+    "label": "KLVX - Louisville, KY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KLWX",
+    "name": "Sterling",
+    "state": "VA",
+    "lat": 38.975,
+    "lon": -77.478,
+    "label": "KLWX - Sterling, VA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KLZK",
+    "name": "Little Rock",
+    "state": "AR",
+    "lat": 34.836,
+    "lon": -92.262,
+    "label": "KLZK - Little Rock, AR",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMAF",
+    "name": "Midland/Odessa",
+    "state": "TX",
+    "lat": 31.943,
+    "lon": -102.189,
+    "label": "KMAF - Midland/Odessa, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMAX",
+    "name": "Medford",
+    "state": "OR",
+    "lat": 42.081,
+    "lon": -122.717,
+    "label": "KMAX - Medford, OR",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KMBX",
+    "name": "Minot AFB",
+    "state": "ND",
+    "lat": 48.393,
+    "lon": -100.864,
+    "label": "KMBX - Minot AFB, ND",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMHX",
+    "name": "Morehead City",
+    "state": "NC",
+    "lat": 34.776,
+    "lon": -76.876,
+    "label": "KMHX - Morehead City, NC",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KMKX",
+    "name": "Milwaukee",
+    "state": "WI",
+    "lat": 42.968,
+    "lon": -88.551,
+    "label": "KMKX - Milwaukee, WI",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMLB",
+    "name": "Melbourne",
+    "state": "FL",
+    "lat": 28.113,
+    "lon": -80.654,
+    "label": "KMLB - Melbourne, FL",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KMOB",
+    "name": "Mobile",
+    "state": "AL",
+    "lat": 30.68,
+    "lon": -88.24,
+    "label": "KMOB - Mobile, AL",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMPX",
+    "name": "Minneapolis/St. Paul",
+    "state": "MN",
+    "lat": 44.849,
+    "lon": -93.566,
+    "label": "KMPX - Minneapolis/St. Paul, MN",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMQT",
+    "name": "Marquette",
+    "state": "MI",
+    "lat": 46.531,
+    "lon": -87.548,
+    "label": "KMQT - Marquette, MI",
+    "timezone": "America/Detroit"
+  },
+  {
+    "id": "KMRX",
+    "name": "Knoxville/Tri-Cities",
+    "state": "TN",
+    "lat": 36.169,
+    "lon": -83.402,
+    "label": "KMRX - Knoxville/Tri-Cities, TN",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMSX",
+    "name": "Missoula",
+    "state": "MT",
+    "lat": 47.041,
+    "lon": -113.986,
+    "label": "KMSX - Missoula, MT",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KMTX",
+    "name": "Salt Lake City",
+    "state": "UT",
+    "lat": 41.263,
+    "lon": -112.448,
+    "label": "KMTX - Salt Lake City, UT",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KMUX",
+    "name": "San Francisco",
+    "state": "CA",
+    "lat": 37.155,
+    "lon": -121.898,
+    "label": "KMUX - San Francisco, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KMVX",
+    "name": "Grand Forks",
+    "state": "ND",
+    "lat": 47.528,
+    "lon": -97.325,
+    "label": "KMVX - Grand Forks, ND",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KMXX",
+    "name": "Maxwell AFB",
+    "state": "AL",
+    "lat": 32.537,
+    "lon": -85.79,
+    "label": "KMXX - Maxwell AFB, AL",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KNKX",
+    "name": "San Diego",
+    "state": "CA",
+    "lat": 32.919,
+    "lon": -117.042,
+    "label": "KNKX - San Diego, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KNQA",
+    "name": "Memphis",
+    "state": "TN",
+    "lat": 35.345,
+    "lon": -89.873,
+    "label": "KNQA - Memphis, TN",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KOAX",
+    "name": "Omaha",
+    "state": "NE",
+    "lat": 41.32,
+    "lon": -96.367,
+    "label": "KOAX - Omaha, NE",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KOHX",
+    "name": "Nashville",
+    "state": "TN",
+    "lat": 36.247,
+    "lon": -86.563,
+    "label": "KOHX - Nashville, TN",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KOKX",
+    "name": "New York City",
+    "state": "NY",
+    "lat": 40.866,
+    "lon": -72.864,
+    "label": "KOKX - New York City, NY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KOTX",
+    "name": "Spokane",
+    "state": "WA",
+    "lat": 47.68,
+    "lon": -117.627,
+    "label": "KOTX - Spokane, WA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KPAH",
+    "name": "Paducah",
+    "state": "KY",
+    "lat": 37.068,
+    "lon": -88.772,
+    "label": "KPAH - Paducah, KY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KPBZ",
+    "name": "Pittsburgh",
+    "state": "PA",
+    "lat": 40.532,
+    "lon": -80.218,
+    "label": "KPBZ - Pittsburgh, PA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KPDT",
+    "name": "Pendleton",
+    "state": "OR",
+    "lat": 45.691,
+    "lon": -118.853,
+    "label": "KPDT - Pendleton, OR",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KPOE",
+    "name": "Fort Polk",
+    "state": "LA",
+    "lat": 31.156,
+    "lon": -92.976,
+    "label": "KPOE - Fort Polk, LA",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KPUX",
+    "name": "Pueblo",
+    "state": "CO",
+    "lat": 38.46,
+    "lon": -104.181,
+    "label": "KPUX - Pueblo, CO",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KRAX",
+    "name": "Raleigh/Durham",
+    "state": "NC",
+    "lat": 35.665,
+    "lon": -78.49,
+    "label": "KRAX - Raleigh/Durham, NC",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KRGX",
+    "name": "Reno",
+    "state": "NV",
+    "lat": 39.754,
+    "lon": -119.462,
+    "label": "KRGX - Reno, NV",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KRIW",
+    "name": "Riverton",
+    "state": "WY",
+    "lat": 43.066,
+    "lon": -108.477,
+    "label": "KRIW - Riverton, WY",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KRLX",
+    "name": "Charleston",
+    "state": "WV",
+    "lat": 38.311,
+    "lon": -81.723,
+    "label": "KRLX - Charleston, WV",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KRMX",
+    "name": "Griffiss AFB",
+    "state": "NY",
+    "lat": 43.468,
+    "lon": -75.458,
+    "label": "KRMX - Griffiss AFB, NY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KRTX",
+    "name": "Portland",
+    "state": "OR",
+    "lat": 45.715,
+    "lon": -122.966,
+    "label": "KRTX - Portland, OR",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KSFX",
+    "name": "Pocatello/Idaho Falls",
+    "state": "ID",
+    "lat": 43.106,
+    "lon": -112.686,
+    "label": "KSFX - Pocatello/Idaho Falls, ID",
+    "timezone": "America/Boise"
+  },
+  {
+    "id": "KSGF",
+    "name": "Springfield",
+    "state": "MO",
+    "lat": 37.235,
+    "lon": -93.4,
+    "label": "KSGF - Springfield, MO",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KSHV",
+    "name": "Shreveport",
+    "state": "LA",
+    "lat": 32.451,
+    "lon": -93.841,
+    "label": "KSHV - Shreveport, LA",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KSJT",
+    "name": "San Angelo",
+    "state": "TX",
+    "lat": 31.371,
+    "lon": -100.493,
+    "label": "KSJT - San Angelo, TX",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KSOX",
+    "name": "Santa Ana Mountains",
+    "state": "CA",
+    "lat": 33.818,
+    "lon": -117.636,
+    "label": "KSOX - Santa Ana Mountains, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KSRX",
+    "name": "Fort Smith",
+    "state": "AR",
+    "lat": 35.29,
+    "lon": -94.362,
+    "label": "KSRX - Fort Smith, AR",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KTBW",
+    "name": "Tampa Bay",
+    "state": "FL",
+    "lat": 27.706,
+    "lon": -82.402,
+    "label": "KTBW - Tampa Bay, FL",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KTFX",
+    "name": "Great Falls",
+    "state": "MT",
+    "lat": 47.46,
+    "lon": -111.385,
+    "label": "KTFX - Great Falls, MT",
+    "timezone": "America/Denver"
+  },
+  {
+    "id": "KTLH",
+    "name": "Tallahassee",
+    "state": "FL",
+    "lat": 30.398,
+    "lon": -84.329,
+    "label": "KTLH - Tallahassee, FL",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KTLX",
+    "name": "Oklahoma City",
+    "state": "OK",
+    "lat": 35.333,
+    "lon": -97.278,
+    "label": "KTLX - Oklahoma City, OK",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KTWX",
+    "name": "Topeka",
+    "state": "KS",
+    "lat": 38.997,
+    "lon": -96.233,
+    "label": "KTWX - Topeka, KS",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KTYX",
+    "name": "Montague",
+    "state": "NY",
+    "lat": 43.756,
+    "lon": -75.68,
+    "label": "KTYX - Montague, NY",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KUDX",
+    "name": "Rapid City",
+    "state": "SD",
+    "lat": 44.125,
+    "lon": -102.83,
+    "label": "KUDX - Rapid City, SD",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KUEX",
+    "name": "Hastings",
+    "state": "NE",
+    "lat": 40.321,
+    "lon": -98.442,
+    "label": "KUEX - Hastings, NE",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KVAX",
+    "name": "Moody AFB",
+    "state": "GA",
+    "lat": 30.89,
+    "lon": -83.002,
+    "label": "KVAX - Moody AFB, GA",
+    "timezone": "America/New_York"
+  },
+  {
+    "id": "KVBX",
+    "name": "Vandenberg AFB",
+    "state": "CA",
+    "lat": 34.838,
+    "lon": -120.398,
+    "label": "KVBX - Vandenberg AFB, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KVNX",
+    "name": "Vance AFB",
+    "state": "OK",
+    "lat": 36.741,
+    "lon": -98.128,
+    "label": "KVNX - Vance AFB, OK",
+    "timezone": "America/Chicago"
+  },
+  {
+    "id": "KVTX",
+    "name": "Los Angeles",
+    "state": "CA",
+    "lat": 34.412,
+    "lon": -119.179,
+    "label": "KVTX - Los Angeles, CA",
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "id": "KVWX",
+    "name": "Evansville",
+    "state": "IN",
+    "lat": 38.26,
+    "lon": -87.725,
+    "label": "KVWX - Evansville, IN",
+    "timezone": "America/Indiana/Indianapolis"
+  },
+  {
+    "id": "KYUX",
+    "name": "Yuma",
+    "state": "AZ",
+    "lat": 32.495,
+    "lon": -114.657,
+    "label": "KYUX - Yuma, AZ",
+    "timezone": "America/Phoenix"
+  },
+  {
+    "id": "PABC",
+    "name": "Bethel",
+    "state": "AK",
+    "lat": 60.792,
+    "lon": -161.876,
+    "label": "PABC - Bethel, AK",
+    "timezone": "America/Anchorage"
+  },
+  {
+    "id": "PACG",
+    "name": "Juneau",
+    "state": "AK",
+    "lat": 56.853,
+    "lon": -135.529,
+    "label": "PACG - Juneau, AK",
+    "timezone": "America/Anchorage"
+  },
+  {
+    "id": "PAEC",
+    "name": "Nome",
+    "state": "AK",
+    "lat": 64.511,
+    "lon": -165.295,
+    "label": "PAEC - Nome, AK",
+    "timezone": "America/Nome"
+  },
+  {
+    "id": "PAHG",
+    "name": "Anchorage",
+    "state": "AK",
+    "lat": 60.726,
+    "lon": -151.351,
+    "label": "PAHG - Anchorage, AK",
+    "timezone": "America/Anchorage"
+  },
+  {
+    "id": "PAIH",
+    "name": "Middleton Island",
+    "state": "AK",
+    "lat": 59.462,
+    "lon": -146.303,
+    "label": "PAIH - Middleton Island, AK",
+    "timezone": "America/Anchorage"
+  },
+  {
+    "id": "PAKC",
+    "name": "King Salmon",
+    "state": "AK",
+    "lat": 58.68,
+    "lon": -156.629,
+    "label": "PAKC - King Salmon, AK",
+    "timezone": "America/Anchorage"
+  },
+  {
+    "id": "PAPD",
+    "name": "Fairbanks",
+    "state": "AK",
+    "lat": 65.035,
+    "lon": -147.502,
+    "label": "PAPD - Fairbanks, AK",
+    "timezone": "America/Anchorage"
+  },
+  {
+    "id": "PASN",
+    "name": "Sitka",
+    "state": "AK",
+    "lat": 56.853,
+    "lon": -135.529,
+    "label": "PASN - Sitka, AK",
+    "timezone": "America/Anchorage"
+  },
+  {
+    "id": "PGUA",
+    "name": "Andersen AFB",
+    "state": "GU",
+    "lat": 13.454,
+    "lon": 144.811,
+    "label": "PGUA - Andersen AFB, GU",
+    "timezone": "Pacific/Guam"
+  },
+  {
+    "id": "PHKI",
+    "name": "South Kauai",
+    "state": "HI",
+    "lat": 21.894,
+    "lon": -159.552,
+    "label": "PHKI - South Kauai, HI",
+    "timezone": "Pacific/Honolulu"
+  },
+  {
+    "id": "PHKM",
+    "name": "Kohala",
+    "state": "HI",
+    "lat": 20.125,
+    "lon": -155.778,
+    "label": "PHKM - Kohala, HI",
+    "timezone": "Pacific/Honolulu"
+  },
+  {
+    "id": "PHMO",
+    "name": "Molokai",
+    "state": "HI",
+    "lat": 21.133,
+    "lon": -157.18,
+    "label": "PHMO - Molokai, HI",
+    "timezone": "Pacific/Honolulu"
+  },
+  {
+    "id": "PHWA",
+    "name": "South Shore",
+    "state": "HI",
+    "lat": 19.095,
+    "lon": -155.569,
+    "label": "PHWA - South Shore, HI",
+    "timezone": "Pacific/Honolulu"
+  },
+  {
+    "id": "TJUA",
+    "name": "San Juan",
+    "state": "PR",
+    "lat": 18.116,
+    "lon": -66.078,
+    "label": "TJUA - San Juan, PR",
+    "timezone": "America/Puerto_Rico"
+  }
+]

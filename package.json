@@ -1,0 +1,20 @@
+{
+  "name": "flight-wx",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 8000",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@foxglove/wasm-bz2": "^0.3.0",
+    "fflate": "^0.8.3",
+    "nexrad-level-2-data": "^3.0.2"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  }
+}
