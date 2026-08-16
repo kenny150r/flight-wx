@@ -1,4 +1,5 @@
 import { isCleanDate } from "./geo.js";
+import { parseSatProduct } from "../sat/iemGoes.js";
 
 export function parseShareSearch(search = "") {
   const q = new URLSearchParams(String(search || "").replace(/^\?/, ""));
@@ -11,10 +12,11 @@ export function parseShareSearch(search = "") {
     frame: Number.isFinite(frame) && frame >= 1 ? frame : 0,
     play: q.get("play") === "1",
     tilt: q.get("tilt") === "base" ? "base" : "closest",
+    sat: parseSatProduct(q.get("sat")),
   };
 }
 
-export function buildShareSearch({ flight, date, hex, frame, play, tilt } = {}) {
+export function buildShareSearch({ flight, date, hex, frame, play, tilt, sat } = {}) {
   const q = new URLSearchParams();
   if (flight) q.set("flight", flight);
   if (date) q.set("date", date);
@@ -22,6 +24,7 @@ export function buildShareSearch({ flight, date, hex, frame, play, tilt } = {}) 
   if (Number.isFinite(frame) && frame >= 1) q.set("frame", String(Math.floor(frame)));
   if (play) q.set("play", "1");
   if (tilt === "base") q.set("tilt", "base");
+  if (sat === "ir" || sat === "vis") q.set("sat", sat);
   return q.toString();
 }
 

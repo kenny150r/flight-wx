@@ -17,6 +17,7 @@ describe("shareUrl", () => {
       frame: 12,
       play: true,
       tilt: "closest",
+      sat: "",
     });
   });
 
@@ -29,8 +30,15 @@ describe("shareUrl", () => {
       frame: 0,
       play: false,
       tilt: "closest",
+      sat: "",
     });
     expect(buildShareSearch({ flight: "EDV4985", date: "20250717", tilt: "base" })).toBe("flight=EDV4985&date=20250717&tilt=base");
+  });
+
+  it("round-trips a GOES overlay product", () => {
+    expect(buildShareSearch({ flight: "EDV4985", date: "20250717", sat: "ir" })).toBe("flight=EDV4985&date=20250717&sat=ir");
+    expect(parseShareSearch("flight=EDV4985&date=20250717&sat=vis")).toMatchObject({ sat: "vis" });
+    expect(parseShareSearch("flight=EDV4985&sat=wv").sat).toBe("");
   });
 
   it("clamps a shared frame to the playable range", () => {
@@ -47,6 +55,7 @@ describe("shareUrl", () => {
       frame: 0,
       play: false,
       tilt: "closest",
+      sat: "",
     });
   });
 });

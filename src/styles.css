@@ -556,6 +556,24 @@ tr { cursor: pointer; }
   margin-top: 8px;
 }
 
+.hud-sat { margin-top: 6px; }
+
+.sat-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: var(--muted);
+  font: 10px/1 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.sat-legend-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #5a5a5a, #9a9a9a, #00d4ff, #3ee0b2, #f0b429, #ff5a1f, #ff00ff, #fff);
+}
+
 .radar-hud button {
   padding: 5px 9px;
   font-size: 0.75rem;

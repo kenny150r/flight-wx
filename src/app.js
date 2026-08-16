@@ -10,7 +10,9 @@ import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean, isCleanDate } from "./analysis/geo.js";
 import { formatTrackTime } from "./analysis/time.js";
 import { buildShareSearch, clampShareFrame, parseShareSearch } from "./analysis/shareUrl.js";
-import { clearRadar, EVENT_ZOOM, highlightSample, initMap, invalidateMapSize, mapZoom, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
+import { clearSatCache, loadSatFrame, prefetchSatFrames } from "./sat/decodeTiff.js";
+import { nearestSatTimeMs, parseSatProduct, satFrameKey, upcomingSatTimes } from "./sat/iemGoes.js";
+import { clearRadar, clearSat, EVENT_ZOOM, highlightSample, initMap, invalidateMapSize, mapZoom, renderTrack, showRadarFrame, showSatFrame, zoomToSample } from "./ui/map.js";
 import { setSeriesViewAround } from "./ui/series.js";
 import {
   hideProgress,
@@ -29,8 +31,8 @@ function readParams() {
   return parseShareSearch(window.location.search);
 }
 
-function writeParams({ flight, date, hex, frame, play, tilt } = {}) {
-  const query = buildShareSearch({ flight, date, hex, frame, play, tilt });
+function writeParams({ flight, date, hex, frame, play, tilt, sat } = {}) {
+  const query = buildShareSearch({ flight, date, hex, frame, play, tilt, sat });
   const next = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
   const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (current === next) return;
@@ -55,6 +57,12 @@ export function boot() {
   let selected = null;
   let product = "reflectivity";
   let tiltMode = "closest";
+  let satProduct = "";
+  let satLoadedKey = "";
+  let satValidMs = NaN;
+  let satError = false;
+  let satLoading = false;
+  let satLoadToken = 0;
   let loadToken = 0;
   let runToken = 0;
   let runAbort = null;
@@ -65,6 +73,7 @@ export function boot() {
 
   const params = readParams();
   if (params.tilt === "base") tiltMode = "base";
+  satProduct = parseSatProduct(params.sat);
   if (params.flight) $("flight").value = params.flight;
   if (params.date) $("date").value = cleanToDateInput(params.date) || params.date;
   if (params.hex) $("hex").value = params.hex;
@@ -147,12 +156,34 @@ export function boot() {
       if (selected) await selectSample(selected, { reload: true });
     });
   });
+  hud.querySelectorAll("[data-sat]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const next = parseSatProduct(btn.dataset.sat);
+      satProduct = next;
+      satError = false;
+      satLoading = false;
+      if (!satProduct) {
+        satLoadToken += 1;
+        satLoadedKey = "";
+        satValidMs = NaN;
+        clearSat();
+        updateRadarHud(hud, hudPayload());
+        syncShareUrl();
+        return;
+      }
+      if (selected) await loadSatForSample(selected, { reload: true });
+      else {
+        updateRadarHud(hud, hudPayload());
+        syncShareUrl();
+      }
+    });
+  });
   $("clear-radar").addEventListener("click", () => {
     stopPlayback();
     clearRadar();
     selected = null;
     loadedKey = "";
-    updateRadarHud(hud, {});
+    updateRadarHud(hud, hudPayload());
     if (summary) refreshView();
     syncShareUrl({ frame: 0, play: false });
   });
@@ -241,6 +272,20 @@ export function boot() {
       frame: selected && samples.length ? index + 1 : 0,
       play: playing,
       tilt: tiltMode,
+      sat: satProduct,
+      ...extra,
+    };
+  }
+
+  function hudPayload(extra = {}) {
+    return {
+      sample: selected,
+      product,
+      tiltMode,
+      sat: satProduct,
+      satTimeMs: satValidMs,
+      satError,
+      satLoading,
       ...extra,
     };
   }
@@ -312,39 +357,79 @@ export function boot() {
       setPlayStatus(`Playing · ${sample.stationId} · ${when.local || when.utc} · ${tilt}`);
     }
     if (sameFrame) {
-      updateRadarHud(hud, { sample, product, tiltMode });
+      updateRadarHud(hud, hudPayload());
       syncShareUrl();
+      void loadSatForSample(sample);
       return;
     }
     if (cached) {
       loadedKey = frameKey;
       showRadarFrame(cached, sample);
-      updateRadarHud(hud, { sample, product, tiltMode });
+      updateRadarHud(hud, hudPayload());
       prefetchAhead(sample);
       syncShareUrl();
+      void loadSatForSample(sample);
       return;
     }
     const token = ++loadToken;
-    updateRadarHud(hud, { sample, product, tiltMode, loading: { text: `Loading ${sample.stationId}…` } });
+    updateRadarHud(hud, hudPayload({ loading: { text: `Loading ${sample.stationId}…` } }));
+    void loadSatForSample(sample);
     try {
       const frame = await loadCachedRadar(sample, product, {
         tiltMode,
         onProgress: (p) => {
-          if (token === loadToken) updateRadarHud(hud, { sample, product, tiltMode, loading: p });
+          if (token === loadToken) updateRadarHud(hud, hudPayload({ loading: p }));
         },
       });
       if (token !== loadToken) return;
       loadedKey = frameKey;
       showRadarFrame(frame, sample);
-      updateRadarHud(hud, { sample, product, tiltMode });
+      updateRadarHud(hud, hudPayload());
       prefetchAhead(sample);
       syncShareUrl();
     } catch (err) {
       if (token !== loadToken) return;
       loadedKey = "";
-      updateRadarHud(hud, { sample, product, tiltMode, error: err.message || String(err) });
+      updateRadarHud(hud, hudPayload({ error: err.message || String(err) }));
       syncShareUrl();
     }
+  }
+
+  async function loadSatForSample(sample, { reload = false } = {}) {
+    if (!satProduct || !sample) return;
+    const key = satFrameKey(satProduct, sample.timeMs);
+    if (!reload && key && key === satLoadedKey) return;
+    const token = ++satLoadToken;
+    satValidMs = nearestSatTimeMs(sample.timeMs);
+    satError = false;
+    satLoading = true;
+    updateRadarHud(hud, hudPayload());
+    try {
+      const frame = await loadSatFrame(satProduct, sample.timeMs);
+      if (token !== satLoadToken) return;
+      satLoadedKey = satFrameKey(satProduct, frame.timeMs);
+      satValidMs = frame.timeMs;
+      satError = false;
+      satLoading = false;
+      showSatFrame(frame);
+      updateRadarHud(hud, hudPayload());
+      prefetchSatAhead(sample);
+      syncShareUrl();
+    } catch (err) {
+      if (token !== satLoadToken || err?.name === "AbortError") return;
+      satLoadedKey = "";
+      satError = true;
+      satLoading = false;
+      updateRadarHud(hud, hudPayload());
+    }
+  }
+
+  function prefetchSatAhead(fromSample) {
+    if (!satProduct || !fromSample) return;
+    const samples = playableSamples(summary?.samples || []);
+    prefetchSatFrames(satProduct, upcomingSatTimes(samples, fromSample.timeMs, 3), {
+      signal: prefetchAbort?.signal,
+    }).catch(() => {});
   }
 
   function prefetchAhead(fromSample) {
@@ -391,6 +476,7 @@ export function boot() {
       frame: restore?.frame,
       play: restore?.play,
       tilt: tiltMode,
+      sat: satProduct,
     });
     setResultsVisible(false);
     stopPlayback();
@@ -398,10 +484,17 @@ export function boot() {
     meta = null;
     selected = null;
     loadedKey = "";
+    satLoadedKey = "";
+    satValidMs = NaN;
+    satError = false;
+    satLoading = false;
+    satLoadToken += 1;
     cacheText = "";
     setPlayButtons(false, false);
     clearFrameCache();
+    clearSatCache();
     clearRadar();
+    clearSat();
     updateRadarHud(hud, {});
     setStatus(status, "", "");
     setProgress(progress, { text: "Looking up flight track…" });

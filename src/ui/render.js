@@ -1,6 +1,7 @@
 import { formatFlightState, formatRadarWx } from "../analysis/flightState.js";
 import { formatTrackTime } from "../analysis/time.js";
 import { MS_TO_KT } from "../analysis/shear.js";
+import { formatSatHud } from "../sat/iemGoes.js";
 import { renderSeries, updateSeriesCursor } from "./series.js";
 
 function fmt(n, digits = 1) {
@@ -114,6 +115,7 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (meta?.notes?.length) notes.push(...meta.notes);
   notes.push("Max reflectivity is the closest-beam gate at flight level. The reflectivity chart overlays closest-beam, 5 km mean, and composite. Gaps in the lines are out of NEXRAD range or missing gates — those stretches are not connected. Drag the chart to zoom a time range, Expand for a larger window, then click a point to load that scan. Composite is the strongest gate in the column (any tilt) at that lat/lon. Use Closest Beam or Base on the map to switch the overlay tilt. Click a peak card to zoom to that event.");
   notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only. Times are UTC; popups also show local time from longitude.");
+  notes.push("Visible and IR on the map load the nearest 15-minute GOES CONUS frame under the radar. IR is color-enhanced cloud-top temperature, not air temperature. Nighttime visible is dark.");
   const notesEl = root.querySelector("[data-notes]");
   if (notesEl) notesEl.textContent = notes.join("\n");
 
@@ -162,9 +164,19 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   }
 }
 
-export function updateRadarHud(el, { sample, product, tiltMode = "closest", loading, error } = {}) {
+export function updateRadarHud(el, {
+  sample,
+  product,
+  tiltMode = "closest",
+  loading,
+  error,
+  sat = "",
+  satTimeMs,
+  satLoading = false,
+  satError = false,
+} = {}) {
   if (!el) return;
-  if (!sample && !loading && !error) {
+  if (!sample && !loading && !error && !sat) {
     el.hidden = true;
     return;
   }
@@ -176,12 +188,15 @@ export function updateRadarHud(el, { sample, product, tiltMode = "closest", load
     ? "base tilt"
     : (Number.isFinite(sample?.elevation) ? `${sample.elevation.toFixed(1)}° ${tiltKind}` : "tilt n/a");
   const when = sample ? formatTrackTime(sample.timeMs, { lon: sample.lon }).label : "";
-  const title = loading
+  const radarTitle = loading
     ? (loading.text || "Loading radar…")
     : error
       ? error
-      : `${sample.stationId} · ${when} · ${tilt}`;
-  el.querySelector("[data-hud-title]").textContent = title;
+      : sample
+        ? `${sample.stationId} · ${when} · ${tilt}`
+        : "";
+  const satTitle = formatSatHud(sat, satTimeMs, { loading: satLoading, error: satError });
+  el.querySelector("[data-hud-title]").textContent = [radarTitle, satTitle].filter(Boolean).join(" · ") || "Radar";
   const stateEl = el.querySelector("[data-hud-state]");
   if (stateEl) {
     stateEl.textContent = sample ? formatFlightState(sample) : "";
@@ -198,6 +213,12 @@ export function updateRadarHud(el, { sample, product, tiltMode = "closest", load
   el.querySelectorAll("[data-tilt]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.tilt === tiltMode);
   });
+  el.querySelectorAll("[data-sat]").forEach((btn) => {
+    const value = btn.dataset.sat === "off" ? "" : btn.dataset.sat;
+    btn.classList.toggle("is-active", value === sat);
+  });
+  const legend = el.querySelector("[data-sat-legend]");
+  if (legend) legend.hidden = sat !== "ir";
 }
 
 export function highlightReportSelection(root, summary, selected) {

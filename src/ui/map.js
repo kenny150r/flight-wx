@@ -1,6 +1,7 @@
 import { flightStatePopupHtml } from "../analysis/flightState.js";
 import { decodePolarData } from "./polarData.js";
 import { RadarGLLayer } from "./radarLayer.js";
+import { createSatOverlay, updateSatOverlay } from "./satLayer.js";
 
 const DBZ_COLORS = [
   [5, "#00ecec"],
@@ -30,6 +31,7 @@ const RING_KM = [50, 100, 150, 200, 250];
 let map;
 let trackLayers = [];
 let radarLayer = null;
+let satLayer = null;
 let rangeRings = null;
 let ringKey = "";
 let selectedMarker = null;
@@ -43,6 +45,8 @@ export function initMap(el) {
     fadeAnimation: false,
     zoomAnimation: true,
   }).setView([39.8, -98.5], 4);
+  map.createPane("satPane");
+  map.getPane("satPane").style.zIndex = 350;
   L.control.zoom({ position: "bottomleft" }).addTo(map);
   L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     attribution: "&copy; OpenStreetMap &copy; CARTO",
@@ -211,6 +215,21 @@ export function clearRadar() {
     radarLayer = null;
   }
   clearRangeRings();
+}
+
+export function showSatFrame(frame) {
+  if (!map || !frame?.canvas || !frame.bounds) return;
+  if (satLayer) {
+    updateSatOverlay(satLayer, frame);
+  } else {
+    satLayer = createSatOverlay(frame);
+    satLayer.addTo(map);
+  }
+}
+
+export function clearSat() {
+  if (satLayer && map) map.removeLayer(satLayer);
+  satLayer = null;
 }
 
 export { sampleKey };
