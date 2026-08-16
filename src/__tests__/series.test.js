@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nearestSampleByX, seriesGapMs, splitSeriesSegments, timeSpan } from "../ui/series.js";
+import { nearestSampleByX, seriesGapMs, splitSeriesSegments, timeSpan, viewRangeAround } from "../ui/series.js";
 
 describe("series", () => {
   const samples = [
@@ -71,5 +71,22 @@ describe("splitSeriesSegments", () => {
   it("clamps a zoomed time span to the data", () => {
     const samples = [{ timeMs: 1000 }, { timeMs: 5000 }];
     expect(timeSpan(samples, { t0: 0, t1: 8000 })).toEqual({ t0: 1000, t1: 5000 });
+  });
+
+  it("zooms a long flight around an event time", () => {
+    const t0 = Date.UTC(2025, 6, 17, 12, 0, 0);
+    const samples = [
+      { timeMs: t0 },
+      { timeMs: t0 + 60 * 60 * 1000 },
+      { timeMs: t0 + 2 * 60 * 60 * 1000 },
+    ];
+    const range = viewRangeAround(samples, t0 + 60 * 60 * 1000);
+    expect(range.t0).toBe(t0 + 50 * 60 * 1000);
+    expect(range.t1).toBe(t0 + 70 * 60 * 1000);
+  });
+
+  it("skips zoom when the flight is already short", () => {
+    const samples = [{ timeMs: 0 }, { timeMs: 8 * 60 * 1000 }];
+    expect(viewRangeAround(samples, 4 * 60 * 1000)).toBeNull();
   });
 });

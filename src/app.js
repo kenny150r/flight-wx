@@ -5,11 +5,13 @@ import { MAX_TRACK_BYTES, parseTrackFile } from "./adsb/parseTrack.js";
 import { clearFrameCache, getCachedFrame, loadCachedRadar, prefetchPlayFrames } from "./analysis/frameCache.js";
 import { nextPlayIndex, PLAY_STEP_MS, playbackFrameKey, playableSamples, playIndexOf, sleep } from "./analysis/playback.js";
 import { defaultConcurrency } from "./analysis/pool.js";
+import { headlineEvent } from "./analysis/report.js";
 import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean, isCleanDate } from "./analysis/geo.js";
 import { formatTrackTime } from "./analysis/time.js";
 import { buildShareSearch, clampShareFrame, parseShareSearch } from "./analysis/shareUrl.js";
 import { clearRadar, EVENT_ZOOM, highlightSample, initMap, invalidateMapSize, mapZoom, renderTrack, showRadarFrame, zoomToSample } from "./ui/map.js";
+import { setSeriesViewAround } from "./ui/series.js";
 import {
   hideProgress,
   highlightReportSelection,
@@ -102,7 +104,7 @@ export function boot() {
           $("date").value = example.dateInput;
           $("hex").value = "";
           $("track-file").value = "";
-          await run();
+          await run({ focusHeadline: true });
         });
         exampleRoot.append(btn);
       }
@@ -372,7 +374,7 @@ export function boot() {
     }).catch(() => {});
   }
 
-  async function run({ restore } = {}) {
+  async function run({ restore, focusHeadline = false } = {}) {
     runAbort?.abort();
     prefetchAbort?.abort();
     const token = ++runToken;
@@ -451,6 +453,8 @@ export function boot() {
         setStatus(status, emptyText[summary.emptyReason] || emptyText.no_scans, "error");
         return;
       }
+      const event = focusHeadline ? headlineEvent(summary) : null;
+      if (event?.sample) setSeriesViewAround(summary.samples, event.sample.timeMs);
       refreshView();
       setResultsVisible(true);
       startPrefetch();
@@ -459,6 +463,10 @@ export function boot() {
       if (summary.listErrors) extra.push(`${summary.listErrors} radar listings failed.`);
       if (summary.volumeCapped) extra.push("Volume count was capped after the stride limit.");
       setStatus(status, `Analyzed ${summary.samples.filter((s) => s.s3Key).length} samples across ${summary.sites.length} radars. Play flight or drag the slider to scrub.${extra.length ? ` ${extra.join(" ")}` : ""}`, extra.length ? "warn" : "ok");
+      if (event?.sample) {
+        await selectSample(event.sample, { zoom: true, product: event.product });
+        return;
+      }
       await restoreShare(restore);
     } catch (err) {
       if (token !== runToken || err?.name === "AbortError") return;

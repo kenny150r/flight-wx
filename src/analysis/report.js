@@ -79,3 +79,25 @@ export function summarizeSamples(samples, { trackCount, volumeCount, bytes } = {
     },
   };
 }
+
+function peakScore(peak, raw) {
+  if (!peak?.sample || !Number.isFinite(raw) || raw <= 0) return -Infinity;
+  return peak.sample.lowConfidence ? raw * 0.7 : raw;
+}
+
+export function headlineEvent(summary) {
+  if (!summary) return null;
+  const candidates = [
+    { peak: summary.maxDbz, product: "reflectivity", score: peakScore(summary.maxDbz, (summary.maxDbz?.value ?? 0) / 45) },
+    { peak: summary.maxCompositeDbz, product: "reflectivity", score: peakScore(summary.maxCompositeDbz, ((summary.maxCompositeDbz?.value ?? 0) / 55) * 0.8) },
+    { peak: summary.maxVr, product: "velocity", score: peakScore(summary.maxVr, (summary.maxVr?.kt ?? 0) / 35) },
+    { peak: summary.maxHorizShear, product: "velocity", score: peakScore(summary.maxHorizShear, (summary.maxHorizShear?.ktPerKm ?? 0) / 8) },
+    { peak: summary.maxVertShear, product: "velocity", score: peakScore(summary.maxVertShear, (summary.maxVertShear?.ktPerKm ?? 0) / 8) },
+  ];
+  let best = null;
+  for (const candidate of candidates) {
+    if (!Number.isFinite(candidate.score) || candidate.score === -Infinity) continue;
+    if (!best || candidate.score > best.score) best = candidate;
+  }
+  return best ? { sample: best.peak.sample, product: best.product, score: best.score } : null;
+}

@@ -51,6 +51,34 @@ export function splitSeriesSegments(samples, getter, maxGapMs) {
   return segments;
 }
 
+export function viewRangeAround(samples, timeMs, { padMs = 10 * 60 * 1000 } = {}) {
+  if (!samples?.length || !Number.isFinite(timeMs)) return null;
+  const sorted = [...samples].sort((a, b) => a.timeMs - b.timeMs);
+  const tMin = sorted[0].timeMs;
+  const tMax = sorted[sorted.length - 1].timeMs;
+  const span = Math.max(1, tMax - tMin);
+  const pad = Math.max(60_000, Math.min(padMs, span / 2));
+  let t0 = timeMs - pad;
+  let t1 = timeMs + pad;
+  if (t0 < tMin) {
+    t1 = Math.min(tMax, t1 + (tMin - t0));
+    t0 = tMin;
+  }
+  if (t1 > tMax) {
+    t0 = Math.max(tMin, t0 - (t1 - tMax));
+    t1 = tMax;
+  }
+  if (t1 - t0 >= span * 0.92) return null;
+  return { t0, t1 };
+}
+
+export function setSeriesViewAround(samples, timeMs, opts) {
+  const sorted = [...(samples || [])].sort((a, b) => a.timeMs - b.timeMs);
+  viewKey = sorted.length ? `${sorted[0].timeMs}:${sorted[sorted.length - 1].timeMs}:${sorted.length}` : "";
+  viewRange = viewRangeAround(sorted, timeMs, opts);
+  return viewRange;
+}
+
 export function timeSpan(samples, range) {
   if (!samples.length) return { t0: 0, t1: 1 };
   const tMin = samples[0].timeMs;
