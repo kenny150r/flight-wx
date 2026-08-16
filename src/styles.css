@@ -558,6 +558,11 @@ tr { cursor: pointer; }
 
 .hud-sat { margin-top: 6px; }
 
+.sat-overlay {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 .sat-legend {
   display: flex;
   align-items: center;

@@ -48,7 +48,7 @@ Low-confidence flags mean the beam missed the aircraft by more than 1 km, or the
 ## Data
 
 - NEXRAD Level II: `unidata-nexrad-level2` (no auth, open CORS)
-- GOES visible / IR overlays: Iowa Environmental Mesonet CONUS 4 km GeoTIFF archive (15-minute vis/IR, time-matched to the selected sample)
+- GOES visible / IR overlays: Iowa Environmental Mesonet CONUS 4 km GeoTIFF archive (15-minute vis/IR, time-matched to the selected sample; native ABI CONUS is ~5 minutes)
 - Station list and in-browser decoder adapted from [RadarRewind](https://github.com/kenny150r/RadarRewind)
 - Live / recent tracks: adsb.lol, adsb.fi, airplanes.live, adsbdb
 

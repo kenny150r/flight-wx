@@ -10,8 +10,8 @@ import { analyzeTrack } from "./analysis/run.js";
 import { cleanToDateInput, dateInputToClean, isCleanDate } from "./analysis/geo.js";
 import { formatTrackTime } from "./analysis/time.js";
 import { buildShareSearch, clampShareFrame, parseShareSearch } from "./analysis/shareUrl.js";
-import { clearSatCache, loadSatFrame, prefetchSatFrames } from "./sat/decodeTiff.js";
-import { nearestSatTimeMs, parseSatProduct, satFrameKey, upcomingSatTimes } from "./sat/iemGoes.js";
+import { clearSatCache, getCachedSatFrame, loadSatFrame, prefetchSatFrames } from "./sat/decodeTiff.js";
+import { formatSatHud, nearestSatTimeMs, parseSatProduct, satFrameKey, uniqueSatTimes } from "./sat/iemGoes.js";
 import { clearRadar, clearSat, EVENT_ZOOM, highlightSample, initMap, invalidateMapSize, mapZoom, renderTrack, showRadarFrame, showSatFrame, zoomToSample } from "./ui/map.js";
 import { setSeriesViewAround } from "./ui/series.js";
 import {
@@ -63,6 +63,8 @@ export function boot() {
   let satError = false;
   let satLoading = false;
   let satLoadToken = 0;
+  let satInflightKey = "";
+  let satPrefetchAbort = null;
   let loadToken = 0;
   let runToken = 0;
   let runAbort = null;
@@ -165,12 +167,15 @@ export function boot() {
       if (!satProduct) {
         satLoadToken += 1;
         satLoadedKey = "";
+        satInflightKey = "";
         satValidMs = NaN;
+        satPrefetchAbort?.abort();
         clearSat();
         updateRadarHud(hud, hudPayload());
         syncShareUrl();
         return;
       }
+      startSatPrefetch();
       if (selected) await loadSatForSample(selected, { reload: true });
       else {
         updateRadarHud(hud, hudPayload());
@@ -317,6 +322,8 @@ export function boot() {
       if (!playing) return;
     }
     syncShareUrl({ play: true, frame: i + 1 });
+    startSatPrefetch();
+    void loadSatForSample(samples[i]);
     while (playing && i < samples.length) {
       await selectSample(samples[i], { quiet: true, keepPlaying: true });
       if (!playing) break;
@@ -354,7 +361,8 @@ export function boot() {
         ? "base"
         : (Number.isFinite(sample.elevation) ? `${sample.elevation.toFixed(1)}°` : "tilt n/a");
       const when = formatTrackTime(sample.timeMs, { lon: sample.lon });
-      setPlayStatus(`Playing · ${sample.stationId} · ${when.local || when.utc} · ${tilt}`);
+      const satBit = formatSatHud(satProduct, satValidMs || sample.timeMs);
+      setPlayStatus(`Playing · ${sample.stationId} · ${when.local || when.utc} · ${tilt}${satBit ? ` · ${satBit}` : ""}`);
     }
     if (sameFrame) {
       updateRadarHud(hud, hudPayload());
@@ -395,11 +403,28 @@ export function boot() {
     }
   }
 
+  function applySatFrame(frame, key) {
+    satLoadedKey = key || satFrameKey(satProduct, frame.timeMs);
+    satValidMs = frame.timeMs;
+    satError = false;
+    satLoading = false;
+    satInflightKey = "";
+    showSatFrame(frame);
+    updateRadarHud(hud, hudPayload());
+  }
+
   async function loadSatForSample(sample, { reload = false } = {}) {
     if (!satProduct || !sample) return;
     const key = satFrameKey(satProduct, sample.timeMs);
     if (!reload && key && key === satLoadedKey) return;
+    if (!reload && key && key === satInflightKey) return;
+    const cached = !reload && getCachedSatFrame(satProduct, sample.timeMs);
+    if (cached) {
+      applySatFrame(cached, key);
+      return;
+    }
     const token = ++satLoadToken;
+    satInflightKey = key;
     satValidMs = nearestSatTimeMs(sample.timeMs);
     satError = false;
     satLoading = true;
@@ -407,28 +432,25 @@ export function boot() {
     try {
       const frame = await loadSatFrame(satProduct, sample.timeMs);
       if (token !== satLoadToken) return;
-      satLoadedKey = satFrameKey(satProduct, frame.timeMs);
-      satValidMs = frame.timeMs;
-      satError = false;
-      satLoading = false;
-      showSatFrame(frame);
-      updateRadarHud(hud, hudPayload());
-      prefetchSatAhead(sample);
+      applySatFrame(frame, key);
       syncShareUrl();
     } catch (err) {
       if (token !== satLoadToken || err?.name === "AbortError") return;
       satLoadedKey = "";
+      satInflightKey = "";
       satError = true;
       satLoading = false;
       updateRadarHud(hud, hudPayload());
     }
   }
 
-  function prefetchSatAhead(fromSample) {
-    if (!satProduct || !fromSample) return;
+  function startSatPrefetch() {
+    satPrefetchAbort?.abort();
+    satPrefetchAbort = new AbortController();
+    if (!satProduct) return;
     const samples = playableSamples(summary?.samples || []);
-    prefetchSatFrames(satProduct, upcomingSatTimes(samples, fromSample.timeMs, 3), {
-      signal: prefetchAbort?.signal,
+    prefetchSatFrames(satProduct, uniqueSatTimes(samples), {
+      signal: satPrefetchAbort.signal,
     }).catch(() => {});
   }
 
@@ -489,6 +511,8 @@ export function boot() {
     satError = false;
     satLoading = false;
     satLoadToken += 1;
+    satInflightKey = "";
+    satPrefetchAbort?.abort();
     cacheText = "";
     setPlayButtons(false, false);
     clearFrameCache();

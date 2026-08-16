@@ -1,29 +1,31 @@
 import { fromArrayBuffer } from "geotiff";
-import { bboxToLeafletBounds, satCandidateTimes, satFrameUrl } from "./iemGoes.js";
+import { bboxToLeafletBounds, nearestSatTimeMs, satCandidateTimes, satFrameKey, satFrameUrl } from "./iemGoes.js";
 import { satRgba } from "./satPalette.js";
 
-const MAX_FRAMES = 12;
-const cache = new Map();
+const MAX_FRAMES = 32;
+const frames = new Map();
 const inflight = new Map();
 
-function cacheSet(url, frame) {
-  if (cache.has(url)) cache.delete(url);
-  cache.set(url, frame);
-  while (cache.size > MAX_FRAMES) {
-    cache.delete(cache.keys().next().value);
+function cacheSet(key, frame) {
+  if (!key || !frame) return;
+  if (frames.has(key)) frames.delete(key);
+  frames.set(key, frame);
+  while (frames.size > MAX_FRAMES) {
+    frames.delete(frames.keys().next().value);
   }
 }
 
-export function getCachedSat(url) {
-  if (!url || !cache.has(url)) return null;
-  const frame = cache.get(url);
-  cache.delete(url);
-  cache.set(url, frame);
+export function getCachedSatFrame(product, timeMs) {
+  const key = satFrameKey(product, timeMs);
+  if (!key || !frames.has(key)) return null;
+  const frame = frames.get(key);
+  frames.delete(key);
+  frames.set(key, frame);
   return frame;
 }
 
 export function clearSatCache() {
-  cache.clear();
+  frames.clear();
   inflight.clear();
 }
 
@@ -32,6 +34,7 @@ function rasterToCanvas(values, width, height, product) {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
   const image = ctx.createImageData(width, height);
   satRgba(values, product, image.data);
   ctx.putImageData(image, 0, 0);
@@ -67,15 +70,9 @@ async function fetchSatTiff(url, signal) {
 }
 
 async function decodeUrl(url, product, signal) {
-  const hit = getCachedSat(url);
-  if (hit) return hit;
   if (inflight.has(url)) return inflight.get(url);
   const pending = fetchSatTiff(url, signal)
     .then((buf) => decodeBuffer(buf, product))
-    .then((decoded) => {
-      cacheSet(url, decoded);
-      return decoded;
-    })
     .finally(() => {
       if (inflight.get(url) === pending) inflight.delete(url);
     });
@@ -84,14 +81,25 @@ async function decodeUrl(url, product, signal) {
 }
 
 export async function loadSatFrame(product, timeMs, { signal } = {}) {
+  const requested = nearestSatTimeMs(timeMs);
+  const cached = getCachedSatFrame(product, requested);
+  if (cached) return cached;
   const times = satCandidateTimes(timeMs);
   let lastErr;
   for (const t of times) {
     const url = satFrameUrl(product, t);
     if (!url) continue;
+    const hit = getCachedSatFrame(product, t);
+    if (hit) {
+      cacheSet(satFrameKey(product, requested), hit);
+      return hit;
+    }
     try {
       const decoded = await decodeUrl(url, product, signal);
-      return { ...decoded, timeMs: t, product, url };
+      const frame = { ...decoded, timeMs: t, product, url };
+      cacheSet(satFrameKey(product, t), frame);
+      cacheSet(satFrameKey(product, requested), frame);
+      return frame;
     } catch (err) {
       lastErr = err;
       if (err?.name === "AbortError") throw err;

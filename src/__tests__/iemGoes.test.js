@@ -8,6 +8,7 @@ import {
   satFrameKey,
   satFrameUrl,
   satNeighborTimeMs,
+  uniqueSatTimes,
   upcomingSatTimes,
 } from "../sat/iemGoes.js";
 
@@ -51,7 +52,7 @@ describe("iemGoes", () => {
     );
   });
 
-  it("lists the next unique 15-minute slots for prefetch", () => {
+  it("lists unique and upcoming 15-minute slots for prefetch", () => {
     const samples = [
       { timeMs: EDV },
       { timeMs: Date.UTC(2025, 6, 17, 15, 4, 0) },
@@ -59,6 +60,11 @@ describe("iemGoes", () => {
       { timeMs: Date.UTC(2025, 6, 17, 15, 20, 0) },
       { timeMs: Date.UTC(2025, 6, 17, 15, 40, 0) },
     ];
+    expect(uniqueSatTimes(samples)).toEqual([
+      Date.UTC(2025, 6, 17, 15, 0, 0),
+      Date.UTC(2025, 6, 17, 15, 15, 0),
+      Date.UTC(2025, 6, 17, 15, 45, 0),
+    ]);
     expect(upcomingSatTimes(samples, EDV, 3)).toEqual([
       Date.UTC(2025, 6, 17, 15, 15, 0),
       Date.UTC(2025, 6, 17, 15, 45, 0),

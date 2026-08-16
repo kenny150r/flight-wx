@@ -1,6 +1,6 @@
 export function satOverlayOptions() {
   return {
-    opacity: 0.85,
+    opacity: 0.9,
     interactive: false,
     pane: "satPane",
     attribution: "GOES via IEM",
@@ -8,12 +8,17 @@ export function satOverlayOptions() {
   };
 }
 
+function frameImageUrl(frame) {
+  if (!frame.imageUrl) frame.imageUrl = frame.canvas.toDataURL("image/png");
+  return frame.imageUrl;
+}
+
 export function createSatOverlay(frame) {
-  return L.imageOverlay(frame.canvas.toDataURL("image/png"), frame.bounds, satOverlayOptions());
+  return L.imageOverlay(frameImageUrl(frame), frame.bounds, satOverlayOptions());
 }
 
 export function updateSatOverlay(layer, frame) {
-  layer.setUrl(frame.canvas.toDataURL("image/png"));
+  layer.setUrl(frameImageUrl(frame));
   layer.setBounds(frame.bounds);
   return layer;
 }

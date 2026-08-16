@@ -115,7 +115,7 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (meta?.notes?.length) notes.push(...meta.notes);
   notes.push("Max reflectivity is the closest-beam gate at flight level. The reflectivity chart overlays closest-beam, 5 km mean, and composite. Gaps in the lines are out of NEXRAD range or missing gates — those stretches are not connected. Drag the chart to zoom a time range, Expand for a larger window, then click a point to load that scan. Composite is the strongest gate in the column (any tilt) at that lat/lon. Use Closest Beam or Base on the map to switch the overlay tilt. Click a peak card to zoom to that event.");
   notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only. Times are UTC; popups also show local time from longitude.");
-  notes.push("Visible and IR on the map load the nearest 15-minute GOES CONUS frame under the radar. IR is color-enhanced cloud-top temperature, not air temperature. Nighttime visible is dark.");
+  notes.push("Visible and IR on the map load the nearest 15-minute GOES CONUS frame under the radar (IEM 4 km archive; native ABI CONUS is ~5 minutes). IR is color-enhanced cloud-top temperature, not air temperature. Nighttime visible is dark. Play keeps that overlay and swaps frames when the 15-minute slot changes.");
   const notesEl = root.querySelector("[data-notes]");
   if (notesEl) notesEl.textContent = notes.join("\n");
 

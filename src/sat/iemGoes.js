@@ -47,19 +47,22 @@ export function satCandidateTimes(timeMs) {
   return [nearest, neighbor];
 }
 
-export function upcomingSatTimes(samples, fromTimeMs, count = 3) {
-  const start = nearestSatTimeMs(fromTimeMs);
-  if (!Number.isFinite(start) || count < 1) return [];
-  const seen = new Set([start]);
+export function uniqueSatTimes(samples) {
+  const seen = new Set();
   const times = [];
   for (const sample of samples || []) {
     const t = nearestSatTimeMs(sample?.timeMs);
-    if (!Number.isFinite(t) || t <= start || seen.has(t)) continue;
+    if (!Number.isFinite(t) || seen.has(t)) continue;
     seen.add(t);
     times.push(t);
-    if (times.length >= count) break;
   }
   return times;
+}
+
+export function upcomingSatTimes(samples, fromTimeMs, count = 3) {
+  const start = nearestSatTimeMs(fromTimeMs);
+  if (!Number.isFinite(start) || count < 1) return [];
+  return uniqueSatTimes(samples).filter((t) => t > start).slice(0, count);
 }
 
 export function bboxToLeafletBounds(bbox) {
