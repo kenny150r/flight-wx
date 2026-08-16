@@ -31,6 +31,8 @@ body {
 a { color: var(--accent); }
 
 .topbar {
+  position: relative;
+  z-index: 2000;
   flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
@@ -39,6 +41,7 @@ a { color: var(--accent); }
   padding: 8px 12px;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
+  overflow: visible;
 }
 
 .brand {
