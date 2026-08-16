@@ -386,7 +386,7 @@ input[type="range"] {
 
 .charts {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 8px;
   min-width: 0;
 }
@@ -400,24 +400,113 @@ input[type="range"] {
 }
 
 .series-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);
 }
 
-.series-head span { font-weight: 600; }
+.series-title { min-width: 0; }
+
+.series-unit { font-weight: 600; }
+
+.series-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.62rem;
+}
+
+.series-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.series-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.series-tools {
+  display: flex;
+  gap: 4px;
+}
+
+.series-tools button,
+.chart-dialog-actions button {
+  padding: 2px 8px;
+  font-size: 0.65rem;
+}
 
 .series svg {
   width: 100%;
-  height: 72px;
+  height: 88px;
   cursor: crosshair;
   display: block;
+  touch-action: none;
 }
 
 .series .axis {
   fill: var(--muted);
   font-size: 9px;
+}
+
+.series .axis-x { font-size: 10px; }
+
+.chart-dialog {
+  width: min(1100px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px 16px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.chart-dialog::backdrop { background: rgba(6, 10, 14, 0.62); }
+
+.chart-dialog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chart-dialog-bar h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.chart-dialog-actions { display: flex; gap: 6px; }
+
+.chart-dialog-hint {
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.charts-lg {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.charts-lg .series svg { height: 240px; }
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .table-panel { margin-top: 0; min-width: 0; }

@@ -118,8 +118,6 @@
     </div>
     <div id="charts" class="charts">
       <div class="series" data-series="dbz"></div>
-      <div class="series" data-series="mean"></div>
-      <div class="series" data-series="composite"></div>
       <div class="series" data-series="vel"></div>
     </div>
     <details class="table-panel">
@@ -136,6 +134,21 @@
       </div>
     </details>
   </section>
+
+  <dialog id="chart-dialog" class="chart-dialog">
+    <div class="chart-dialog-bar">
+      <h2>Time series</h2>
+      <div class="chart-dialog-actions">
+        <button type="button" class="ghost" data-chart-reset hidden>Reset zoom</button>
+        <button type="button" class="ghost" data-chart-close>Close</button>
+      </div>
+    </div>
+    <p class="chart-dialog-hint">Drag to zoom a time range. Click a point to load that scan. Scroll to zoom. Double-click or Reset to show the full flight. Gaps are out of NEXRAD range or missing gates — those stretches are not connected.</p>
+    <div class="charts charts-lg">
+      <div class="series" data-series="dbz"></div>
+      <div class="series" data-series="vel"></div>
+    </div>
+  </dialog>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

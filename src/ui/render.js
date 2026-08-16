@@ -112,7 +112,7 @@ export function renderReport(root, summary, meta, { onSelect, selected } = {}) {
   if (summary.samples?.some((s) => s.aliasSuspect)) notes.push("Some radial velocities are near typical Nyquist (~50 kt). No dealiasing; peak |Vr| or shear may be folded.");
   if (summary.lowConfidenceCount) notes.push(`${summary.lowConfidenceCount} low-confidence samples (beam miss or missing gate).`);
   if (meta?.notes?.length) notes.push(...meta.notes);
-  notes.push("Max reflectivity is the closest-beam gate at flight level. The 5 km mean series averages finite gates on that tilt within 5 km of the aircraft. Composite is the strongest gate in the column (any tilt) at that lat/lon. Use Closest Beam or Base on the map to switch the overlay tilt. Click a peak card to zoom to that event.");
+  notes.push("Max reflectivity is the closest-beam gate at flight level. The reflectivity chart overlays closest-beam, 5 km mean, and composite. Gaps in the lines are out of NEXRAD range or missing gates — those stretches are not connected. Drag the chart to zoom a time range, Expand for a larger window, then click a point to load that scan. Composite is the strongest gate in the column (any tilt) at that lat/lon. Use Closest Beam or Base on the map to switch the overlay tilt. Click a peak card to zoom to that event.");
   notes.push("Horizontal shear is azimuthal gate-to-gate Vr. Vertical shear is dVr/dz from neighboring tilts at the aircraft (along-beam fallback if only one velocity tilt). Velocity is radar radial Vr, not true wind. No dealiasing. CONUS WSR-88D only. Times are UTC; popups also show local time from longitude.");
   const notesEl = root.querySelector("[data-notes]");
   if (notesEl) notesEl.textContent = notes.join("\n");
