@@ -52,7 +52,7 @@ export default defineConfig({
     target: "es2022",
   },
   optimizeDeps: {
-    exclude: ["nexrad-level-2-data", "@foxglove/wasm-bz2"],
+    exclude: ["nexrad-level-2-data", "@foxglove/wasm-bz2", "h5wasm"],
     esbuildOptions: { target: "es2022" },
   },
   worker: {

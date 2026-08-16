@@ -1,5 +1,5 @@
 import { isCleanDate } from "./geo.js";
-import { parseSatProduct } from "../sat/iemGoes.js";
+import { parseSatProduct } from "../sat/goesAbi.js";
 
 export function parseShareSearch(search = "") {
   const q = new URLSearchParams(String(search || "").replace(/^\?/, ""));

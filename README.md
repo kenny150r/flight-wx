@@ -37,7 +37,7 @@ An optional Mode-S hex helps historical [readsb globe-history](https://github.co
 
 - **Max reflectivity** — dBZ at the aircraft, using the tilt whose 4/3-earth beam is closest to altitude. Nearby max is the strongest gate within 5 km on that tilt. The 5 km mean series is the arithmetic mean of finite gates in that same window.
 - **Max composite reflectivity** — strongest dBZ in the column at that lat/lon (max over all tilts). Click the card to load the tilt that held the peak.
-- **Time series** — closest-beam, 5 km mean, and composite dBZ on one reflectivity chart, plus signed radial velocity. Lines break across out-of-range or missing-gate stretches instead of connecting through them. Drag to zoom a time range, Expand for a larger window, then click a point to load that scan. Click a peak, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind). Visible and IR load the nearest 15-minute GOES CONUS frame under the radar; IR is color-enhanced cloud-top temperature. The popup and radar HUD show flight state at that point (flight level, heading, ground speed, vertical speed).
+- **Time series** — closest-beam, 5 km mean, and composite dBZ on one reflectivity chart, plus signed radial velocity. Lines break across out-of-range or missing-gate stretches instead of connecting through them. Drag to zoom a time range, Expand for a larger window, then click a point to load that scan. Click a peak, table row, or track point to load that station’s Level II scan on the map (WebGL polar overlay, same approach as RadarRewind). Visible and IR load the nearest 5-minute GOES ABI CONUS scan under the radar; IR is color-enhanced cloud-top temperature. The popup and radar HUD show flight state at that point (flight level, heading, ground speed, vertical speed).
 - **Play flight** — steps through the path in time, or drag the slider to scrub. Decoded radar frames are cached so station/tilt changes stay smooth after the first load.
 - **Max |Vr|** — NEXRAD radial velocity (toward/away from the radar), not true wind. No dealiasing.
 - **Max horizontal shear** — strongest azimuthal (gate-to-gate) radial-velocity shear in a ~2.5 km window, in kt/km and s⁻¹. Click the card to zoom to that event and load velocity.
@@ -48,7 +48,7 @@ Low-confidence flags mean the beam missed the aircraft by more than 1 km, or the
 ## Data
 
 - NEXRAD Level II: `unidata-nexrad-level2` (no auth, open CORS)
-- GOES visible / IR overlays: Iowa Environmental Mesonet CONUS 4 km GeoTIFF archive (15-minute vis/IR, time-matched to the selected sample; native ABI CONUS is ~5 minutes)
+- GOES visible / IR overlays: NOAA ABI-L2-CMIPC on AWS (`noaa-goes16` / `18` / `19`), Channel 02 visible (0.5 km) and Channel 13 IR (2 km), nearest 5-minute CONUS scan, reprojected to the map. IEM 15-minute 4 km GeoTIFFs are the fallback if a scan is missing.
 - Station list and in-browser decoder adapted from [RadarRewind](https://github.com/kenny150r/RadarRewind)
 - Live / recent tracks: adsb.lol, adsb.fi, airplanes.live, adsbdb
 

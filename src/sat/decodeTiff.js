@@ -96,7 +96,7 @@ export async function loadSatFrame(product, timeMs, { signal } = {}) {
     }
     try {
       const decoded = await decodeUrl(url, product, signal);
-      const frame = { ...decoded, timeMs: t, product, url };
+      const frame = { ...decoded, timeMs: t, product, url, source: "iem", attribution: "GOES via IEM" };
       cacheSet(satFrameKey(product, t), frame);
       cacheSet(satFrameKey(product, requested), frame);
       return frame;
